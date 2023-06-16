@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:sch="http://ws.efactura.isaltda.py/" xmlns:tns="http://ws.efactura.isaltda.py/" targetNamespace="http://ws.efactura.isaltda.py/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema xmlns="http://ws.efactura.isaltda.py/" elementFormDefault="qualified" targetNamespace="http://ws.efactura.isaltda.py/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="consultaRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="id" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="cdc" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="numeroTipoDocumento" type="tns:numeroTipoDocumento" />
+            <xs:element minOccurs="0" maxOccurs="1" name="fechaEmisionDesde" type="xs:dateTime" />
+            <xs:element minOccurs="0" maxOccurs="1" name="fechaEmisionHasta" type="xs:dateTime" />
+            <xs:element minOccurs="0" maxOccurs="1" name="fechaIngresoDesde" type="xs:dateTime" />
+            <xs:element minOccurs="0" maxOccurs="1" name="fechaIngresoHasta" type="xs:dateTime" />
+            <xs:element minOccurs="0" maxOccurs="1" name="maximoResultados" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="resultadoInicial" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="retornarKuDE" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="timbrado" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="retornarXmlFirmado" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="establecimiento" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="puntoExpedicion" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="naturalezaReceptor" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="numeroDocumento" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="ruc" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="dv" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="numeroTipoDocumento">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="numero" type="xs:integer" />
+          <xs:element minOccurs="0" name="numeroSerie" type="xs:string" />
+          <xs:element minOccurs="0" name="tipo" type="xs:integer" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="documentoError">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="codigo" type="xs:string" />
+          <xs:element minOccurs="0" name="mensaje" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="documento">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="id" type="xs:long" />
+          <xs:element minOccurs="0" name="cdc" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="numero" type="xs:long" />
+          <xs:element minOccurs="0" maxOccurs="1" name="tipoDocumento" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="timbrado" type="xs:long" />
+          <xs:element minOccurs="0" maxOccurs="1" name="establecimiento" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="puntoExpedicion" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="numeroSerie" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="fechaIngreso" type="xs:dateTime" />
+          <xs:element minOccurs="0" maxOccurs="1" name="fechaEmision" type="xs:dateTime" />
+          <xs:element minOccurs="0" maxOccurs="1" name="estado" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="estadoEnvio" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="estadoAnulacion" type="xs:string" />
+          <xs:element minOccurs="1" name="secuencia" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="kuDE" type="xs:base64Binary" />
+          <xs:element minOccurs="0" maxOccurs="1" name="xmlFirmado" type="xs:base64Binary" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="documentoError" type="tns:documentoError" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="consultaResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="1" name="cantidadResultados" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="cantidadTotalResultados" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="documento" type="tns:documento" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaRucRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="ruc" type="xs:string" />
+            <xs:element minOccurs="0" name="retornarRespuestaOriginal" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="resultadoRuc">
+        <xs:sequence>
+          <xs:element minOccurs="1" name="ruc" type="xs:string" />
+          <xs:element minOccurs="1" name="codigoRespuesta" type="xs:string" />
+          <xs:element minOccurs="0" name="mensajeError" type="xs:string" />
+          <xs:element minOccurs="0" name="razonSocial" type="xs:string" />
+          <xs:element minOccurs="0" name="codigoEstadoRuc" type="xs:string" />
+          <xs:element minOccurs="0" name="descripcionEstadoRuc" type="xs:string" />
+          <xs:element minOccurs="0" name="facturadorElectronico" type="xs:string" />
+          <xs:element minOccurs="0" name="respuestaOriginal" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="consultaRucResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="resultadoRuc" type="tns:resultadoRuc" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaInutilizacionResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="1" name="id" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="tipo" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="rangoDesde" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="rangoHasta" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="estado" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="mensaje" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="errorInutilizacion">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="codigo" type="xs:string" />
+          <xs:element minOccurs="0" name="mensaje" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="consultaInutilizacionRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="id" type="xs:long" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaRecibidoRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="cdc" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaRecibidoResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="1" name="documento" type="xs:base64Binary" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaDEPorCicloRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="ciclo" type="tns:ciclo" />
+            <xs:element minOccurs="0" maxOccurs="1" name="estadoDocumento" type="tns:estadoDocumento" />
+            <xs:element minOccurs="0" maxOccurs="1" name="tipoDocumento" type="xs:integer" />
+            <xs:element minOccurs="1" maxOccurs="1" name="pagina" type="xs:integer" />
+            <xs:element minOccurs="1" maxOccurs="1" name="cantidad" type="xs:integer" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaDEPorCicloResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="1" name="documentos" type="tns:documentos" />
+            <xs:element minOccurs="1" maxOccurs="1" name="totales" type="tns:totales" />
+            <xs:element minOccurs="1" maxOccurs="1" name="datosPaginacion" type="tns:datosPaginacion" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="datosPaginacion">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="pagina" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cantidadPaginas" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cantidadRegistrosPorPagina" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cantidadTotalRegistros" type="xs:long" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="documentos">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="documento" type="tns:documento" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="totales">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="totalDE" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalIngresado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalAprobado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalAprobadoObs" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalRechazado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalCancelado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalInutilizado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalReingresado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalRechazadoReingresado" type="xs:long" />
+          <xs:element minOccurs="1" maxOccurs="1" name="totalRechazadoInutilizado" type="xs:long" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:simpleType name="ciclo">
+        <xs:restriction base="xs:string">
+          <xs:length value="20" />
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType name="estadoDocumento">
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="INGRESADO" />
+          <xs:enumeration value="APROBADO" />
+          <xs:enumeration value="APROBADO_OBS" />
+          <xs:enumeration value="RECHAZADO" />
+          <xs:enumeration value="CANCELADO" />
+          <xs:enumeration value="INUTILIZADO" />
+          <xs:enumeration value="REINGRESADO" />
+          <xs:enumeration value="RECHAZADO_REINGRESADO" />
+          <xs:enumeration value="RECHAZADO_INUTILIZADO" />
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:element name="consultaPorCDCRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="cdc" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="retornarKuDE" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="nombrePlantilla" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="retornarRespuestaOriginal" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="retornarXmlDE" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="consultaPorCDCResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="codigoRespuesta" type="xs:string" />
+            <xs:element minOccurs="1" maxOccurs="1" name="mensajeRespuesta" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="kude" type="xs:base64Binary" />
+            <xs:element minOccurs="0" maxOccurs="1" name="respuestaOriginal" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="xmlDE" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="consultaRucResponse">
+    <wsdl:part name="consultaRucResponse" element="tns:consultaRucResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaInutilizacionResponse">
+    <wsdl:part name="consultaInutilizacionResponse" element="tns:consultaInutilizacionResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaRucRequest">
+    <wsdl:part name="consultaRucRequest" element="tns:consultaRucRequest" />
+  </wsdl:message>
+  <wsdl:message name="consultaDEPorCicloResponse">
+    <wsdl:part name="consultaDEPorCicloResponse" element="tns:consultaDEPorCicloResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaPorCDCRequest">
+    <wsdl:part name="consultaPorCDCRequest" element="tns:consultaPorCDCRequest" />
+  </wsdl:message>
+  <wsdl:message name="consultaPorCDCResponse">
+    <wsdl:part name="consultaPorCDCResponse" element="tns:consultaPorCDCResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaInutilizacionRequest">
+    <wsdl:part name="consultaInutilizacionRequest" element="tns:consultaInutilizacionRequest" />
+  </wsdl:message>
+  <wsdl:message name="consultaRecibidoResponse">
+    <wsdl:part name="consultaRecibidoResponse" element="tns:consultaRecibidoResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaRequest">
+    <wsdl:part name="consultaRequest" element="tns:consultaRequest" />
+  </wsdl:message>
+  <wsdl:message name="consultaResponse">
+    <wsdl:part name="consultaResponse" element="tns:consultaResponse" />
+  </wsdl:message>
+  <wsdl:message name="consultaRecibidoRequest">
+    <wsdl:part name="consultaRecibidoRequest" element="tns:consultaRecibidoRequest" />
+  </wsdl:message>
+  <wsdl:message name="consultaDEPorCicloRequest">
+    <wsdl:part name="consultaDEPorCicloRequest" element="tns:consultaDEPorCicloRequest" />
+  </wsdl:message>
+  <wsdl:portType name="Consultas">
+    <wsdl:operation name="consultaRuc">
+      <wsdl:input name="consultaRucRequest" message="tns:consultaRucRequest" />
+      <wsdl:output name="consultaRucResponse" message="tns:consultaRucResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="consultaInutilizacion">
+      <wsdl:input name="consultaInutilizacionRequest" message="tns:consultaInutilizacionRequest" />
+      <wsdl:output name="consultaInutilizacionResponse" message="tns:consultaInutilizacionResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="consultaDEPorCiclo">
+      <wsdl:input name="consultaDEPorCicloRequest" message="tns:consultaDEPorCicloRequest" />
+      <wsdl:output name="consultaDEPorCicloResponse" message="tns:consultaDEPorCicloResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="consultaPorCDC">
+      <wsdl:input name="consultaPorCDCRequest" message="tns:consultaPorCDCRequest" />
+      <wsdl:output name="consultaPorCDCResponse" message="tns:consultaPorCDCResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="consultaRecibido">
+      <wsdl:input name="consultaRecibidoRequest" message="tns:consultaRecibidoRequest" />
+      <wsdl:output name="consultaRecibidoResponse" message="tns:consultaRecibidoResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="consulta">
+      <wsdl:input name="consultaRequest" message="tns:consultaRequest" />
+      <wsdl:output name="consultaResponse" message="tns:consultaResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="ConsultasSoap11" type="tns:Consultas">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="consultaRuc">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaRucRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaRucResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consultaInutilizacion">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaInutilizacionRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaInutilizacionResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consultaDEPorCiclo">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaDEPorCicloRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaDEPorCicloResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consultaPorCDC">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaPorCDCRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaPorCDCResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consultaRecibido">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaRecibidoRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaRecibidoResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="consulta">
+      <soap:operation soapAction="" />
+      <wsdl:input name="consultaRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="consultaResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="ConsultasService">
+    <wsdl:port name="ConsultasSoap11" binding="tns:ConsultasSoap11">
+      <soap:address location="http://172.19.0.242:8080/efactura-py/ws/Consultas" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

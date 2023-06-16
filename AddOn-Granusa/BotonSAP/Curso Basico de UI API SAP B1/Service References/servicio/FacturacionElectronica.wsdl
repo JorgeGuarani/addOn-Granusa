@@ -1,0 +1,849 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:sch="http://ws.efactura.isaltda.py/" xmlns:tns="http://ws.efactura.isaltda.py/" targetNamespace="http://ws.efactura.isaltda.py/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema xmlns="http://ws.efactura.isaltda.py/" elementFormDefault="qualified" targetNamespace="http://ws.efactura.isaltda.py/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:complexType name="gOpeDE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipEmi" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodSeg" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dInfoEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dInfoFisc" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gTimb">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTiDE" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTiDE" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumTim" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEst" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPunExp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumDoc" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSerieNum" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFeIniT" type="xs:date" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gOpeCom">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipTra" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipTra" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTImp" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTImp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cMoneOpe" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesMoneOpe" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCondTiCam" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTiCam" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iCondAnt" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCondAnt" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gEmis">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dRucEm" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVEmi" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipCont" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cTipReg" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomFanEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCas" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCompDir1" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCompDir2" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDepEmi" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDepEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisEmi" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCiuEmi" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCiuEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTelEmi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEmailE" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDenSuc" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="9" name="gActEco" type="tns:gActEco" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gRespDE" type="tns:gRespDE" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gActEco">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="cActEco" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesActEco" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gRespDE">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iTipIDRespDE" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDTipIDRespDE" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNumIDRespDE" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNomRespDE" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dCarRespDE" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gDatRec">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iNatRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTiOpe" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cPaisRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesPaisRe" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTiContRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRucRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipIDRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDTipIDRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumIDRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomFanRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCasRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDepRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDepRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCiuRec" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCiuRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTelRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCelRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEmailRec" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodCliente" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gDatGralOpe">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dFeEmiDE" type="xs:dateTime" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gOpeCom" type="tns:gOpeCom" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gEmis" type="tns:gEmis" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gDatRec" type="tns:gDatRec" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCompPub">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dModCont" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEntCont" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAnoCont" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSecCont" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFeCodCont" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamFE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iIndPres" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesIndPres" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecEmNR" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCompPub" type="tns:gCompPub" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamFEE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="cFleExp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesFleExp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPuEmb" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamFEI">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="cTipRegImp" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPuLleg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNuDesp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecDesp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomDesp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRucDesp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVDesp" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cPaisProd" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesPaisProd" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dVend" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dValorInv" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dValorFle" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dValorSeg" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dValorImpGs" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDerAdu" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIndi" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSerValor" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIVAImp" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTasaIntAd" type="xs:integer" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamAE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipCons" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipCons" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCons" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumControl" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="iNatVen" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesNatVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="iTipIDVen" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDTipIDVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNumIDVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNomVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDirVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNumCasVen" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cDepVen" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesDepVen" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisVen" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisVen" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCiuVen" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesCiuVen" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDirProv" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cDepProv" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesDepProv" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisProv" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisProv" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="cCiuProv" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesCiuProv" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamNCDE">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iMotEmi" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesMotEmi" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamNRE">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iMotEmiNR" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesMotEmiNR" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="iRespEmiNR" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesRespEmiNR" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dKmR" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecEm" type="xs:date" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gPagTarCD">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iDenTarj" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesDenTarj" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRSProTar" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRUCProTar" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVProTar" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iForProPa" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodAuOpe" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomTit" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumTarj" type="xs:integer" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gPagCheq">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCheq" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dBcoEmi" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gPaConEIni">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iTiPago" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesTiPag" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dMonTiPag" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cMoneTiPag" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDMoneTiPag" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTiCamTiPag" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gPagTarCD" type="tns:gPagTarCD" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gPagCheq" type="tns:gPagCheq" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCuotas">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="cMoneCuo" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDMoneCuo" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dMonCuota" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dVencCuo" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gPagCred">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iCondCred" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDCondCred" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPlazoCre" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCuotas" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dMonEnt" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gCuotas" type="tns:gCuotas" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamCond">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iCondOpe" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDCondOpe" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gPaConEIni" type="tns:gPaConEIni" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gPagCred" type="tns:gPagCred" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gValorItem">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="dPUniProSer" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTiCamIt" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotBruOpeItem" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="gValorRestaItem" type="tns:gValorRestaItem" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gValorRestaItem">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dDescItem" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPorcDesIt" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDescGloItem" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAntPreUniIt" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAntGloPreUniIt" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotOpeItem" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotOpeGs" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamIVA">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iAfecIVA" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesAfecIVA" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dPropIVA" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTasaIVA" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dBasGravIVA" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dLiqIVAItem" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamISC">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="cCatISC" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCatISC" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cTasaISC" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dBaseGravISC" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLiqISCItem" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gRasMerc">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumLote" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dVencMerc" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNSerie" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumPedi" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumSegui" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomImp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirImp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumFir" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumReg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumRegEntCom" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamItem">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodInt" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dParAranc" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNCM" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDncpG" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDncpE" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dGtin" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dGtinPq" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesProSer" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cUniMed" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesUniMed" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dCantProSer" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cPaisOrig" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesPaisOrig" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dInfItem" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cRelMerc" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesRelMerc" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCanQuiMer" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPorQuiMer" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCDCAnticipo" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gValorItem" type="tns:gValorItem" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamIVA" type="tns:gCamIVA" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gVehNuevo" type="tns:gVehNuevo" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gRasMerc" type="tns:gRasMerc" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gVehNuevo">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipOpVN" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipOpVN" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dChasis" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dColor" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPotencia" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCapMot" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPNet" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPBruto" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipCom" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipCom" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNroMotor" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCapTracc" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAnoFab" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cTipVeh" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCapac" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCilin" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gGrupEner">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dNroMed" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dActiv" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCateg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLecAnt" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLecAct" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dConKwh" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gGrupSeg">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodEmpSeg" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="unbounded" name="gGrupPolSeg" type="tns:gGrupPolSeg" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gGrupPolSeg">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="dPoliza" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dUnidVig" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dVigencia" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dNumPoliza" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecIniVig" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecFinVig" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCodInt" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gGrupSup">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomCaj" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEfectivo" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dVuelto" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDonac" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDonac" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gGrupAdi">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dCiclo" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecIniC" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecFinC" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="dVencPag" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dContrato" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSalAnt" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamEsp">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="gGrupEner" type="tns:gGrupEner" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gGrupSeg" type="tns:gGrupSeg" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gGrupSup" type="tns:gGrupSup" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gGrupAdi" type="tns:gGrupAdi" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamSal">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="dDirLocSal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCasSal" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dComp1Sal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dComp2Sal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDepSal" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDepSal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisSal" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisSal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCiuSal" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCiuSal" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTelSal" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamEnt">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirLocEnt" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCasEnt" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dComp1Ent" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dComp2Ent" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDepEnt" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDepEnt" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cDisEnt" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesDisEnt" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCiuEnt" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCiuEnt" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTelEnt" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gVehTras">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dTiVehTras" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dMarVeh" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTipIdenVeh" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNroIDVeh" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAdicVeh" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNroMatVeh" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNroVuelo" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamTrans">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iNatTrans" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRucTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVTrans" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipIDTrans" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDTipIDTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumIDTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cNacTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesNacTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumIDChof" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNomChof" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDomFisc" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirChof" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNombAg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRucAg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVAg" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDirAge" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gTransp">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipTrans" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipTrans" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iModTrans" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesModTrans" type="xs:string" />
+          <xs:element minOccurs="1" maxOccurs="1" name="iRespFlete" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cCondNeg" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNuManif" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNuDespImp" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIniTras" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFinTras" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cPaisDest" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesPaisDest" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamSal" type="tns:gCamSal" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gCamEnt" type="tns:gCamEnt" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gVehTras" type="tns:gVehTras" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamTrans" type="tns:gCamTrans" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gDtipDE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamFE" type="tns:gCamFE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamFEE" type="tns:gCamFEE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamFEI" type="tns:gCamFEI" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamAE" type="tns:gCamAE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamNCDE" type="tns:gCamNCDE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamNRE" type="tns:gCamNRE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamCond" type="tns:gCamCond" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gCamItem" type="tns:gCamItem" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamEsp" type="tns:gCamEsp" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gTransp" type="tns:gTransp" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gTotSub">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dSubExe" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSubExo" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSub5" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSub10" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dSubISC" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotOpe" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotDesc" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotDescGlotem" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotAntItem" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotAnt" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPorcDescTotal" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDescTotal" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dAnticipo" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dRedon" type="xs:decimal" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dTotGralOpe" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIVA5" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIVA10" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLiqTotIVA5" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLiqTotIVA10" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotIVA" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dBaseGrav5" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dBaseGrav10" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTBasGraIVA" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dLTotISC" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTBasGravISC" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotalGs" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dComi" type="xs:decimal" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dIVAComi" type="xs:decimal" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamGen">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dOrdCompra" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dOrdVta" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dAsiento" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamCarg" type="tns:gCamCarg" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamCarg">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="cUniMedTotVol" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesUniMedTotVol" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotVolMerc" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="cUniMedTotPes" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesUniMedTotPes" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dTotPesMerc" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iCarCarga" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesCarCarga" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamDEAsoc">
+        <xs:sequence>
+          <xs:element minOccurs="1" maxOccurs="1" name="iTipDocAso" type="xs:integer" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dDesTipDocAso" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dCdCDERef" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNTimDI" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dEstDocAso" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dPExpDocAso" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumDocAso" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipoDocAso" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDTipoDocAso" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecEmiDI" type="xs:date" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumComRet" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumResCF" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="iTipCons" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dDesTipCons" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumCons" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dNumControl" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="DE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dDVId" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dFecFirma" type="xs:dateTime" />
+          <xs:element minOccurs="1" maxOccurs="1" name="dSisFact" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gOpeDE" type="tns:gOpeDE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gTimb" type="tns:gTimb" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gDatGralOpe" type="tns:gDatGralOpe" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gDtipDE" type="tns:gDtipDE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gTotSub" type="tns:gTotSub" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamGen" type="tns:gCamGen" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="gCamDEAsoc" type="tns:gCamDEAsoc" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="gCamFuFD">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dCarQR" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="dInfAdic" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="rDE">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="1" name="dVerFor" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="DE" type="tns:DE" />
+          <xs:element minOccurs="0" maxOccurs="1" name="gCamFuFD" type="tns:gCamFuFD" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="rDE" type="tns:rDE" />
+      <xs:complexType name="parametrosProcesamiento">
+        <xs:sequence>
+          <xs:element name="retornarKuDE" type="xs:boolean" />
+          <xs:element name="retornarXmlFirmado" type="xs:boolean" />
+          <xs:element minOccurs="0" name="templateKuDE" type="xs:string" />
+          <xs:element minOccurs="0" name="forzarReingreso" type="xs:boolean" />
+          <xs:element minOccurs="0" maxOccurs="1" name="notificarMail" type="xs:boolean" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="docAsociado" type="tns:docAsociado" />
+          <xs:element minOccurs="0" name="cdc" type="xs:string" />
+          <xs:element minOccurs="0" name="validarCalculos" type="xs:boolean" />
+          <xs:element minOccurs="0" name="cicloFacturacion" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="notificarActualizacionEstado" type="xs:boolean" />
+          <xs:element minOccurs="0" maxOccurs="1" name="urlNotificacion" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="1" name="generarKuDE" type="xs:boolean" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="resultadoProcesamiento">
+        <xs:sequence>
+          <xs:element name="ok" type="xs:boolean" />
+          <xs:element minOccurs="0" name="mensajeError" type="xs:string" />
+          <xs:element minOccurs="0" name="numDocumentoError" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="documentoElectronicoGenerado" type="tns:documentoElectronicoGenerado" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="documentoElectronicoGenerado">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="id" type="xs:string" />
+          <xs:element minOccurs="0" name="kuDE" type="xs:base64Binary" />
+          <xs:element minOccurs="0" name="xmlFirmado" type="xs:base64Binary" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="procesarDocumento">
+        <xs:sequence>
+          <xs:element minOccurs="0" ref="tns:rDE" />
+          <xs:element minOccurs="0" name="parametrosProcesamiento" type="tns:parametrosProcesamiento" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="procesarLoteRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="procesarDocumento" type="tns:procesarDocumento" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="procesarLote2Request">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="procesarDocumento" type="tns:procesarDocumento" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="procesarLotePorFacturaRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="procesarDocumento" type="tns:procesarDocumento" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="procesarLoteResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="return" type="tns:resultadoProcesamiento" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="procesarLotePorFacturaResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="return" type="tns:resultadoProcesamiento" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:complexType name="docAsociado">
+        <xs:sequence>
+          <xs:element name="numero" type="xs:integer" />
+          <xs:element name="tipo" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="timbrado" type="xs:long" />
+          <xs:element minOccurs="0" maxOccurs="1" name="puntoExpedicion" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="establecimiento" type="xs:integer" />
+          <xs:element minOccurs="0" maxOccurs="1" name="numeroSerie" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="inutilizarNumeracionRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ruc" type="xs:string" />
+            <xs:element name="timbrado" type="xs:integer" />
+            <xs:element name="establecimiento" type="xs:integer" />
+            <xs:element name="puntoExpedicion" type="xs:integer" />
+            <xs:element name="tipoDocumento" type="xs:integer" />
+            <xs:element name="rangoDesde" type="xs:integer" />
+            <xs:element name="rangoHasta" type="xs:integer" />
+            <xs:element name="motivo" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="notificarActualizacionEstado" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="urlNotificacion" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="inutilizarNumeracionResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ok" type="xs:boolean" />
+            <xs:element minOccurs="0" name="id" type="xs:long" />
+            <xs:element minOccurs="0" name="mensajeError" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="anularRequest">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="1" maxOccurs="1" name="cdc" type="xs:string" />
+            <xs:element minOccurs="1" maxOccurs="1" name="motivo" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="notificarActualizacionEstado" type="xs:boolean" />
+            <xs:element minOccurs="0" maxOccurs="1" name="urlNotificacion" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="apikey" type="xs:string" />
+            <xs:element minOccurs="0" maxOccurs="1" name="usuario" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="anularResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ok" type="xs:boolean" />
+            <xs:element minOccurs="0" name="mensajeError" type="xs:string" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="procesarLotePorFacturaRequest">
+    <wsdl:part name="procesarLotePorFacturaRequest" element="tns:procesarLotePorFacturaRequest" />
+  </wsdl:message>
+  <wsdl:message name="inutilizarNumeracionRequest">
+    <wsdl:part name="inutilizarNumeracionRequest" element="tns:inutilizarNumeracionRequest" />
+  </wsdl:message>
+  <wsdl:message name="anularResponse">
+    <wsdl:part name="anularResponse" element="tns:anularResponse" />
+  </wsdl:message>
+  <wsdl:message name="procesarLoteResponse">
+    <wsdl:part name="procesarLoteResponse" element="tns:procesarLoteResponse" />
+  </wsdl:message>
+  <wsdl:message name="procesarLoteRequest">
+    <wsdl:part name="procesarLoteRequest" element="tns:procesarLoteRequest" />
+  </wsdl:message>
+  <wsdl:message name="procesarLotePorFacturaResponse">
+    <wsdl:part name="procesarLotePorFacturaResponse" element="tns:procesarLotePorFacturaResponse" />
+  </wsdl:message>
+  <wsdl:message name="anularRequest">
+    <wsdl:part name="anularRequest" element="tns:anularRequest" />
+  </wsdl:message>
+  <wsdl:message name="procesarLote2Request">
+    <wsdl:part name="procesarLote2Request" element="tns:procesarLote2Request" />
+  </wsdl:message>
+  <wsdl:message name="inutilizarNumeracionResponse">
+    <wsdl:part name="inutilizarNumeracionResponse" element="tns:inutilizarNumeracionResponse" />
+  </wsdl:message>
+  <wsdl:portType name="FacturacionElectronica">
+    <wsdl:operation name="procesarLotePorFactura">
+      <wsdl:input name="procesarLotePorFacturaRequest" message="tns:procesarLotePorFacturaRequest" />
+      <wsdl:output name="procesarLotePorFacturaResponse" message="tns:procesarLotePorFacturaResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="inutilizarNumeracion">
+      <wsdl:input name="inutilizarNumeracionRequest" message="tns:inutilizarNumeracionRequest" />
+      <wsdl:output name="inutilizarNumeracionResponse" message="tns:inutilizarNumeracionResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="anular">
+      <wsdl:input name="anularRequest" message="tns:anularRequest" />
+      <wsdl:output name="anularResponse" message="tns:anularResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="procesarLote">
+      <wsdl:input name="procesarLoteRequest" message="tns:procesarLoteRequest" />
+      <wsdl:output name="procesarLoteResponse" message="tns:procesarLoteResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="procesarLote2">
+      <wsdl:input name="procesarLote2Request" message="tns:procesarLote2Request" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="FacturacionElectronicaSoap11" type="tns:FacturacionElectronica">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="procesarLotePorFactura">
+      <soap:operation soapAction="" />
+      <wsdl:input name="procesarLotePorFacturaRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="procesarLotePorFacturaResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="inutilizarNumeracion">
+      <soap:operation soapAction="" />
+      <wsdl:input name="inutilizarNumeracionRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="inutilizarNumeracionResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="anular">
+      <soap:operation soapAction="" />
+      <wsdl:input name="anularRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="anularResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="procesarLote">
+      <soap:operation soapAction="" />
+      <wsdl:input name="procesarLoteRequest">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="procesarLoteResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="procesarLote2">
+      <soap:operation soapAction="" />
+      <wsdl:input name="procesarLote2Request">
+        <soap:body use="literal" />
+      </wsdl:input>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="FacturacionElectronicaService">
+    <wsdl:port name="FacturacionElectronicaSoap11" binding="tns:FacturacionElectronicaSoap11">
+      <soap:address location="http://172.19.0.40:8080/efactura-py/ws/FacturacionElectronica" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
