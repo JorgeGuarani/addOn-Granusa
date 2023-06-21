@@ -50,6 +50,8 @@ namespace BOTONSAP
         public static string v_AdicionalInfo = null;
         public static string v_RTa = null;
         public static string v_DecimalGR = "0";
+        public static string v_version = "2.7";
+        public static string v_addOn = "GRANUSA_FE(x86)";
 
         static void Main(string[] args)
         {
@@ -69,9 +71,25 @@ namespace BOTONSAP
             oDecimal.DoQuery("SELECT \"U_Valor\" FROM \"FG_PROD\".\"@APP_CONFIG\" WHERE \"U_Empresa\"='GR' AND \"Name\"='DecimalesFE' ");
             string v_DecimalGR  = oDecimal.Fields.Item(0).Value.ToString();
 
+            //control de version del addOn
+            Recordset oVaddOn;
+            oVaddOn = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+            oVaddOn.DoQuery("SELECT COUNT(*) FROM \"FG_PROD\".\"@APP_CONFIG\" WHERE \"Name\"='"+ v_addOn + "' AND \"U_Valor\"='"+ v_version + "' AND \"U_Empresa\"='GR' ");
+            int v_existe = int.Parse(oVaddOn.Fields.Item(0).Value.ToString());
+            if (v_existe == 0)
+            {
+                MessageBox.Show("Debe actualizar la versión del addOn!!", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                var oMenuItem = SBO_Application.Menus.Item("43520");               
+                var oMenus = oMenuItem.SubMenus; //If you want add sub menu by using this line you can add sub menu
+                oMenus.RemoveEx("FG");
+                oCompany.Disconnect();
+                SBO_Application.StatusBar.SetText("ACTUALIZAR LA VERSION DEL ADDON", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+            }
+
 
             //Recordset oAct;
             //oAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+            //oAct.DoQuery("UPDATE NNM1 SET \"EndStr\"='002' WHERE \"SeriesName\"='1-002NE' ");
             //oAct.DoQuery("UPDATE INV1 SET \"BaseRef\"='7173', \"BaseType\"=17, \"BaseEntry\"=15285 WHERE \"DocEntry\"='15195' ");
             //oAct.DoQuery("DELETE FROM \"@REMI_DET2\" ");
             //oAct.DoQuery("update OINV set \"FolioPref\"='022',\"FolioNum\"=933 where \"DocNum\"=34279336  ");
@@ -589,7 +607,7 @@ namespace BOTONSAP
                         botonAdd = "";
                     }
                     //al presionar crear, tomamos el valor del numero de documento y guardamos el ID del boton crear para poder usar para el webserivce
-                    if (pVal.EventType == BoEventTypes.et_CLICK && pVal.ItemUID == "1" && pVal.BeforeAction == false)
+                    if (pVal.EventType == BoEventTypes.et_CLICK && pVal.ItemUID == "1" && pVal.BeforeAction == false && pVal.FormMode!=2)
                     {
                         SAPbouiCOM.Form oForm = SBO_Application.Forms.Item(FormUID);
                         Item oItem;
@@ -3530,6 +3548,7 @@ namespace BOTONSAP
                     //visualizar form de anular
                     if (pVal.BeforeAction && (pVal.MenuUID == "botonSAP.anular"))
                     {
+                        
                         SBO_Application.ActivateMenuItem("47658");//47660 FG_DESA
                         SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
@@ -3571,39 +3590,45 @@ namespace BOTONSAP
                     //visualizar form de anular
                     if (pVal.BeforeAction && (pVal.MenuUID == "botonSAP.anular"))
                     {
-                        SBO_Application.ActivateMenuItem("47630");//47660 FG_DESA
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "ANULAR", "");
+                        //SBO_Application.ActivateMenuItem("47630");//47660 FG_DESA
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
                     //visualizar form de cancelar
                     if (pVal.BeforeAction && (pVal.MenuUID == "botonSAP.cancelar"))
                     {
-                        SBO_Application.ActivateMenuItem("47629");//47660 FG_DESA
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "CANCELAR", "");
+                        //SBO_Application.ActivateMenuItem("47629");//47660 FG_DESA
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
 
                     }
                     //viualizar form de auditoria
                     if (pVal.BeforeAction && (pVal.MenuUID == "auditoria"))
                     {
-                        SBO_Application.ActivateMenuItem("47631");
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "AUDITORIAFE", "");
+                        //SBO_Application.ActivateMenuItem("47631");
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
                     //visualizar form de RT
                     if (pVal.BeforeAction && (pVal.MenuUID == "RemiTemp"))
                     {
-                        SBO_Application.ActivateMenuItem("47634");
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "REMI_TEMP", "");
+                        //SBO_Application.ActivateMenuItem("47634");
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
                     //viualizar form de inutilizar
                     if (pVal.BeforeAction && (pVal.MenuUID == "inutilizar"))
                     {
-                        SBO_Application.ActivateMenuItem("47636");
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "INUTILIZAR", "");
+                        //SBO_Application.ActivateMenuItem("47636");
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
                     //visualizar form de numeracion
                     if (pVal.BeforeAction && (pVal.MenuUID == "numeracion"))
                     {
-                        SBO_Application.ActivateMenuItem("47637");
-                        SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
+                        SBO_Application.OpenForm(BoFormObjectEnum.fo_UserDefinedObject, "NUMERACION", "");
+                        //SBO_Application.ActivateMenuItem("47637");
+                        //SAPbouiCOM.Form form = SBO_Application.Forms.ActiveForm;
                     }
                 }
 
@@ -3688,7 +3713,7 @@ namespace BOTONSAP
                     {
                         //GRANUSA
                         oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
+                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
                                        "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                        "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
                                        "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -3756,7 +3781,7 @@ namespace BOTONSAP
                     {
                         //GRANUSA
                         oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
+                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
                                        "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                        "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
                                        "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -8064,7 +8089,7 @@ namespace BOTONSAP
                                        "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"Pager\",T15.\"Name\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
                                        "T13.\"Street\",T15.\"Address\", " +
                                        "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                       "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\" " +
+                                       "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
                                        "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
                                        "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"AdresType\"='B' " +
                                        "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
@@ -8097,7 +8122,7 @@ namespace BOTONSAP
                                        "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"Pager\",T15.\"Name\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
                                        "T13.\"Street\",T15.\"Address\", " +
                                        "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                       "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\" " +
+                                       "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
                                        "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
                                        "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"AdresType\"='S' " +
                                        "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
@@ -8123,7 +8148,7 @@ namespace BOTONSAP
                         if (!string.IsNullOrEmpty(direTras))
                         {
                             oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",T0.\"Address\",CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                  "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
+                                  "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
                                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
                                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -8134,7 +8159,7 @@ namespace BOTONSAP
                                   "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
                                   "T13.\"Street\",T15.\"U_Direccion\", " +
                                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END ," +
-                                  "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\" " +
+                                  "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
                                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
                                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"AdresType\"='B' " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
@@ -8144,7 +8169,7 @@ namespace BOTONSAP
                                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
                                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                                  "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Name\"=T0.\"U_VEHICULOS\" " +
+                                  "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
                                   "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
                                   "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
@@ -8156,7 +8181,7 @@ namespace BOTONSAP
                         else
                         {
                             oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",T0.\"Address\",CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                  "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
+                                  "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
                                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
                                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -8167,7 +8192,7 @@ namespace BOTONSAP
                                   "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
                                   "T13.\"Street\",T15.\"U_Direccion\", " +
                                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END ," +
-                                  "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\" " +
+                                  "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
                                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
                                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"AdresType\"='S' " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
@@ -8177,7 +8202,7 @@ namespace BOTONSAP
                                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
                                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                                  "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Name\"=T0.\"U_VEHICULOS\" " +
+                                  "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
                                   "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
                                   "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
@@ -8208,7 +8233,7 @@ namespace BOTONSAP
                                            "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"Pager\",T15.\"Name\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
                                            "T13.\"Street\",T15.\"Address\", " +
                                            "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                           "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\" " +
+                                           "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
                                            "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
                                            "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
                                            "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
@@ -19551,7 +19576,7 @@ namespace BOTONSAP
                     {
                         //GRANUSA
                         oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
+                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
                                        "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                        "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
                                        "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -19619,7 +19644,7 @@ namespace BOTONSAP
                     {
                         //GRANUSA
                         oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
+                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='PYG' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),"+ v_DecimalGR + ") END," +
                                        "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
                                        "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
                                        "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
@@ -33011,7 +33036,20 @@ namespace BOTONSAP
                     E_CardCode.Value = v_CardCode;                  
                     if (v_clase.Equals("dDocument_Items")) { E_Clase.Select(0, SAPbouiCOM.BoSearchKey.psk_Index); }
                     else { E_Clase.Select(1, SAPbouiCOM.BoSearchKey.psk_Index); }
-                    E_Moneda.Select(v_Moneda, SAPbouiCOM.BoSearchKey.psk_ByValue);
+
+                    //verficamos que tipo de moneda tiene el cliente
+                    Recordset oMone;
+                    oMone = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oMone.DoQuery("SELECT \"Currency\" FROM OCRD WHERE \"CardCode\"='"+v_CardCode+"' ");
+                    string v_currency = oMone.Fields.Item(0).Value.ToString();
+
+                    if (v_currency.Equals("##"))
+                    {
+                        E_Moneda.Select(v_Moneda, SAPbouiCOM.BoSearchKey.psk_ByValue);
+                    }
+                    
+                    
+                    
                 }
                 //consultamos los datos de la RT
                 SAPbobsCOM.Recordset oDatosRT;
@@ -33201,7 +33239,17 @@ namespace BOTONSAP
 
 
                     E_CardCode.Value = v_CardCode;
-                    E_Moneda.Select(v_Moneda, SAPbouiCOM.BoSearchKey.psk_ByValue);                                                         
+                    //verficamos que tipo de moneda tiene el cliente
+                    Recordset oMone;
+                    oMone = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oMone.DoQuery("SELECT \"Currency\" FROM OCRD WHERE \"CardCode\"='" + v_CardCode + "' ");
+                    string v_currency = oMone.Fields.Item(0).Value.ToString();
+
+                    if (v_currency.Equals("##"))
+                    {
+                        E_Moneda.Select(v_Moneda, SAPbouiCOM.BoSearchKey.psk_ByValue);
+                    }
+                                                                             
                 }
                 //consultamos los datos de la RT
                 SAPbobsCOM.Recordset oDatosRT;
