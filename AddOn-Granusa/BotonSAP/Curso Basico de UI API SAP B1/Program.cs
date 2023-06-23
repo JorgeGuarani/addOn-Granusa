@@ -89,8 +89,8 @@ namespace BOTONSAP
 
             //Recordset oAct;
             //oAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //oAct.DoQuery("UPDATE NNM1 SET \"EndStr\"='002' WHERE \"SeriesName\"='1-002NE' ");
-            //oAct.DoQuery("UPDATE INV1 SET \"BaseRef\"='7173', \"BaseType\"=17, \"BaseEntry\"=15285 WHERE \"DocEntry\"='15195' ");
+            ////oAct.DoQuery("UPDATE NNM1 SET \"EndStr\"='002' WHERE \"SeriesName\"='1-002NE' ");
+            //oAct.DoQuery("UPDATE DLN1 SET \"BaseRef\"='7264', \"BaseType\"=17, \"BaseEntry\"=15515 WHERE \"DocEntry\"='11924' ");
             //oAct.DoQuery("DELETE FROM \"@REMI_DET2\" ");
             //oAct.DoQuery("update OINV set \"FolioPref\"='022',\"FolioNum\"=933 where \"DocNum\"=34279336  ");
             //oAct.DoQuery("update OINV set \"FolioPref\"='022',\"FolioNum\"=982 where \"DocNum\"=34279337  ");
@@ -1566,15 +1566,15 @@ namespace BOTONSAP
                         p_EntNum = oEntNum.Value;
                         EditText oEntOrd = (EditText)oFormUDF.Items.Item("U_RT").Specific;
                         p_RT = oEntOrd.Value;
-
+                        SAPbouiCOM.EditText oRTa = (SAPbouiCOM.EditText)oFormUDF.Items.Item("U_RTa").Specific;
+                        v_RTa = oRTa.Value;
                     }
                     //ponemos en mapa re relaciones la orden con la entrega
                     if (pVal.BeforeAction == false && pVal.ActionSuccess == true && pVal.ItemUID == "1" && pVal.FormTypeEx == "140" && pVal.EventType == BoEventTypes.et_ITEM_PRESSED && pVal.FormMode == 3)
                     {
                         SAPbouiCOM.Form oFormEnt = SBO_Application.Forms.Item(FormUID);
                         SAPbouiCOM.Button oBtnR = (SAPbouiCOM.Button)oFormEnt.Items.Item("btnRemi").Specific;
-                        SAPbouiCOM.EditText oRTa = (SAPbouiCOM.EditText)oFormUDF.Items.Item("U_RTa").Specific;
-                        string v_RTa = oRTa.Value;
+
                        
                         if (!string.IsNullOrEmpty(p_RT))
                         {                            
@@ -4642,8 +4642,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA2.dPropIVA = 100;
-                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -4659,8 +4659,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA2.dPropIVA = 100;
-                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -4721,8 +4721,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA3.dPropIVA = 100;
-                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -4738,8 +4738,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA3.dPropIVA = 100;
-                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -4800,8 +4800,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA4.dPropIVA = 100;
-                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -4817,8 +4817,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA4.dPropIVA = 100;
-                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -4879,8 +4879,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA5.dPropIVA = 100;
-                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -4896,8 +4896,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA5.dPropIVA = 100;
-                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -4958,8 +4958,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA6.dPropIVA = 100;
-                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -4975,8 +4975,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA6.dPropIVA = 100;
-                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5037,8 +5037,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA7.dPropIVA = 100;
-                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5054,8 +5054,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA7.dPropIVA = 100;
-                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5116,8 +5116,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA8.dPropIVA = 100;
-                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5133,8 +5133,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA8.dPropIVA = 100;
-                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5195,8 +5195,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA9.dPropIVA = 100;
-                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5212,8 +5212,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA9.dPropIVA = 100;
-                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5274,8 +5274,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA10.dPropIVA = 100;
-                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), 2);
-                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), 2);
+                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5291,8 +5291,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA10.dPropIVA = 100;
-                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), 2);
-                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), 2);
+                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5353,8 +5353,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA11.dPropIVA = 100;
-                                    gCamIVA11.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA11.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"),v_deciGR);
+                                    gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5370,8 +5370,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA11.dPropIVA = 100;
-                                    gCamIVA11.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA11.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"),v_deciGR);
+                                    gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5432,8 +5432,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA12.dPropIVA = 100;
-                                    gCamIVA12.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA12.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5449,8 +5449,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA12.dPropIVA = 100;
-                                    gCamIVA12.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA12.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5511,8 +5511,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA13.dPropIVA = 100;
-                                    gCamIVA13.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA13.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5528,8 +5528,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA13.dPropIVA = 100;
-                                    gCamIVA13.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA13.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5590,8 +5590,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA14.dPropIVA = 100;
-                                    gCamIVA14.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA14.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")),v_deciGR);
                                 }
 
                             }
@@ -5607,8 +5607,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA14.dPropIVA = 100;
-                                    gCamIVA14.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA14.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5669,8 +5669,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA15.dPropIVA = 100;
-                                    gCamIVA15.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA15.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5686,8 +5686,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA15.dPropIVA = 100;
-                                    gCamIVA15.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA15.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5748,8 +5748,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA16.dPropIVA = 100;
-                                    gCamIVA16.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA16.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5765,8 +5765,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA16.dPropIVA = 100;
-                                    gCamIVA16.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA16.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5827,8 +5827,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA17.dPropIVA = 100;
-                                    gCamIVA17.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA17.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5844,8 +5844,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA17.dPropIVA = 100;
-                                    gCamIVA17.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA17.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5906,8 +5906,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA18.dPropIVA = 100;
-                                    gCamIVA18.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA18.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -5923,8 +5923,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA18.dPropIVA = 100;
-                                    gCamIVA18.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA18.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -5983,8 +5983,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA19.dPropIVA = 100;
-                                    gCamIVA19.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA19.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -6000,8 +6000,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA19.dPropIVA = 100;
-                                    gCamIVA19.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA19.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
@@ -6062,8 +6062,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA20.dPropIVA = 100;
-                                    gCamIVA20.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA20.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                    gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
                                 }
 
                             }
@@ -6079,8 +6079,8 @@ namespace BOTONSAP
                                 else
                                 {
                                     gCamIVA20.dPropIVA = 100;
-                                    gCamIVA20.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA20.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                    gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
                                 }
 
                             }
