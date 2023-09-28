@@ -34,7 +34,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>true</Prefer32Bit>
@@ -95,6 +95,7 @@
   <PropertyGroup />
   <PropertyGroup />
   <PropertyGroup />
+  <PropertyGroup />
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -123,6 +124,9 @@
   <ItemGroup>
     <Compile Include="actualizarSET.b1f.cs">
       <DependentUpon>actualizarSET.b1f</DependentUpon>
+    </Compile>
+    <Compile Include="anularRTb1f.cs">
+      <DependentUpon>anularRTb1f</DependentUpon>
     </Compile>
     <Compile Include="cancelar.b1f.cs">
       <DependentUpon>cancelar.b1f</DependentUpon>
@@ -187,12 +191,13 @@
     <None Include="actualizarSET.b1f">
       <FormCategory>UDOForm</FormCategory>
     </None>
+    <None Include="anularRTb1f">
+      <FormCategory>UserForm</FormCategory>
+    </None>
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="app.manifest">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="app.manifest" />
     <None Include="cancelar.b1f">
       <FormCategory>UDOForm</FormCategory>
     </None>

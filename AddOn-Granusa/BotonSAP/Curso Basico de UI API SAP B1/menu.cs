@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 using SAPbouiCOM;
 using Curso_Basico_de_UI_API_SAP_B1;
 using System.Xml;
+using SAPbouiCOM.Framework;
 
 namespace Curso_Basico_de_UI_API_SAP_B1
 {
     internal class menu
-    {
+    {                  
         //public void AddMenuItems()
         //{
         //    BOTONSAP.Program.oCompany=(SAPbobsCOM.Company)BOTONSAP.Program.SBO_Application.Company.GetDICompany();

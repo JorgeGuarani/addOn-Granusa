@@ -33,6 +33,9 @@ namespace BOTONSAP
             this.ComboBox1 = ((SAPbouiCOM.ComboBox)(this.GetItem("41_U_Cb").Specific));
             this.StaticText6 = ((SAPbouiCOM.StaticText)(this.GetItem("42_U_S").Specific));
             this.ComboBox2 = ((SAPbouiCOM.ComboBox)(this.GetItem("42_U_Cb").Specific));
+            this.LinkedButton0 = ((SAPbouiCOM.LinkedButton)(this.GetItem("Item_0").Specific));
+            this.LinkedButton1 = ((SAPbouiCOM.LinkedButton)(this.GetItem("Item_1").Specific));
+            this.Button0 = ((SAPbouiCOM.Button)(this.GetItem("Item_2").Specific));
             this.OnCustomInitialize();
 
         }
@@ -65,5 +68,8 @@ namespace BOTONSAP
         private SAPbouiCOM.ComboBox ComboBox1;
         private SAPbouiCOM.StaticText StaticText6;
         private SAPbouiCOM.ComboBox ComboBox2;
+        private SAPbouiCOM.LinkedButton LinkedButton0;
+        private SAPbouiCOM.LinkedButton LinkedButton1;
+        private SAPbouiCOM.Button Button0;
     }
 }
