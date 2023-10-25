@@ -50,9 +50,9 @@ namespace BOTONSAP
         public static string v_AdicionalInfo = null;
         public static string v_RTa = null;
         public static string v_DecimalGR = "0";
-        public static string v_version = "3.7";
+        public static string v_version = "4.0";
         public static string v_addOn = "GRANUSA_FE(x86)";
-        public static bool v_permiso = false;
+        public static bool v_permiso = true;
         public static bool v_Jenga = false;
 
         static void Main(string[] args)
@@ -1907,7 +1907,8 @@ namespace BOTONSAP
                     if (pVal.ItemUID == "btnPDFNC" && pVal.BeforeAction == false)
                     {
 
-                        //CrearDocumento("60118", "ORIN", "RIN1", "5", "NOTA_CREDITO", "Nota de crédito electrónica");
+                        //CrearDocumento("60149", "ORIN", "RIN1", "5", "NOTA_CREDITO", "Nota de crédito electrónica");
+                        //ReenviarDocumento("60154", "ORIN", "RIN1", "5", "NOTA_CREDITO", "Nota de crédito electrónica", "");
                         SAPbouiCOM.Form oForm = SBO_Application.Forms.Item(FormUID);
                         //para obtener el docnum
                         Item oDocNum;
@@ -4261,8 +4262,12 @@ namespace BOTONSAP
                 if (transaccion.Equals("12")) { TipTra = "12"; DesTipTra = "Venta de crédito fiscal"; }
                 if (transaccion.Equals("13")) { TipTra = "13"; DesTipTra = "Muestras médicas (Art. 3 RG 24 / 2014)"; }
 
-                gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
-                gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
+                if (tablacab.Equals("OINV"))
+                {
+                    gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
+                    gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
+                }
+                
                 gOpeCom.iTImp = oDatos.Fields.Item(24).Value.ToString();
                 gOpeCom.cMoneOpe = oDatos.Fields.Item(8).Value.ToString();
                 //en caso de que sea DOLAR
@@ -8086,7 +8091,7 @@ namespace BOTONSAP
                         DE.gCamDEAsoc = gCamDEAsoc1;
                         gCamDEAsoc1[0] = gCamDEAsoc;
                         gCamDEAsoc.iTipDocAso = "1";
-                        gCamDEAsoc.dCdCDERef = "01800823800001001000066612023083118866269680";// DocAsoc.Fields.Item(0).Value.ToString();
+                        gCamDEAsoc.dCdCDERef = DocAsoc.Fields.Item(0).Value.ToString();
                         DocAsoc.MoveNext();
                     }
                 }
@@ -8251,13 +8256,11 @@ namespace BOTONSAP
             //}
             SAPbobsCOM.Recordset query;
             query = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+            string v_entry = null;
             if (tabla.Equals("\"@REMI_CAB\""))
             {
-                query.DoQuery("SELECT \"U_CDC\",\"DocEntry\" FROM " + tabla + " WHERE \"U_ESTA\"='" + esta + "' AND \"U_PEMI\"='" + pemi + "' AND \"U_FolioNum\"='" + fol + "' AND \"U_TIMB\"='" + tim + "' " + SubType);
-                SAPbobsCOM.Recordset cancelRT;
-                cancelRT = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                cancelRT.DoQuery("UPDATE \"@REMI_CAB\" SET \"Canceled\"='Y',\"U_DosStatus\"='C' WHERE \"U_ESTA\"='" + esta + "' AND \"U_PEMI\"='" + pemi + "' AND \"U_FolioNum\"='" + fol + "' AND \"U_TIMB\"='" + tim + " '");
-                SBO_Application.StatusBar.SetText("Documento anulado correctamente!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
+                query.DoQuery("SELECT \"U_CDC\",\"DocEntry\" FROM " + tabla + " WHERE \"U_ESTA\"='" + esta + "' AND \"U_PEMI\"='" + pemi + "' AND \"U_FolioNum\"='" + fol + "' AND \"U_TIMB\"='" + tim + "' ");
+                v_entry = query.Fields.Item(1).Value.ToString();                           
             }
             else
             {
@@ -8302,9 +8305,14 @@ namespace BOTONSAP
                 }
                 if (tabla.Equals("\"@REMI_CAB\""))
                 {
-                    SAPbobsCOM.Recordset cancelRT;
-                    cancelRT = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    cancelRT.DoQuery("UPDATE \"@REMI_CAB\" SET \"Canceled\"='Y',\"U_DosStatus\"='C' WHERE \"U_ESTA\"='" + esta + "' AND \"U_PEMI\"='" + pemi + "' AND \"U_FolioNum\"='" + fol + "' AND \"U_TIMB\"='" + tim + " '");
+                    SAPbobsCOM.UserTable oUserT;
+                    oUserT = oCompany.UserTables.Item("REMI_CAB");
+                    if (oUserT.GetByKey(v_entry))
+                    {
+                        SAPbobsCOM.Recordset cancelUDO;
+                        cancelUDO = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        cancelUDO.DoQuery("UPDATE \"@REMI_CAB\" SET \"Canceled\"='Y',\"U_ESTADO\"='CANCELADO' WHERE \"Code\"='" + v_entry + "'");
+                    }
                     SBO_Application.StatusBar.SetText("Documento anulado correctamente!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
                 }
 
@@ -19698,42 +19706,42 @@ namespace BOTONSAP
                 //consultamos cual direccion se eligio              
 
                 #region QUERY DOCUMENTO
-                if (!string.IsNullOrEmpty(direShip))
-                {
-                    //GRANUSA
-                    oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                   "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
-                                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
-                                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
-                                   "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
-                                   "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END ,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
-                                   "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
-                                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                   "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\"  " +
-                                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
-                                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
-                                   "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
-                                   "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
-                                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
-                                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                                   "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
-                                   "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
-                                   //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
-                                   "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
-                                   "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
-                                   "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
-                                   "WHERE T0.\"DocNum\"='" + codigo + "'");
+                //if (!string.IsNullOrEmpty(direShip))
+                //{
+                //    //GRANUSA
+                //    oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
+                //                   "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
+                //                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
+                //                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                //                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                //                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
+                //                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
+                //                   "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
+                //                   "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END ,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
+                //                   "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
+                //                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
+                //                   "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\"  " +
+                //                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
+                //                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
+                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
+                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
+                //                   "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
+                //                   "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
+                //                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
+                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
+                //                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
+                //                   "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
+                //                   "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
+                //                   //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
+                //                   "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
+                //                   "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
+                //                   "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
+                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
+                //                   "WHERE T0.\"DocNum\"='" + codigo + "'");
 
-                }
-                else
-                {
+                //}
+                //else
+                //{
                     //GRANUSA
                     oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
                                    "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
@@ -19765,7 +19773,7 @@ namespace BOTONSAP
                                    "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
                                    "WHERE T0.\"DocNum\"='" + codigo + "'");
 
-                }
+                //}
                 #endregion
 
                 string Entry = oDatos.Fields.Item(0).Value.ToString();
@@ -20188,8 +20196,12 @@ namespace BOTONSAP
                 if (transaccion.Equals("12")) { TipTra = "12"; DesTipTra = "Venta de crédito fiscal"; }
                 if (transaccion.Equals("13")) { TipTra = "13"; DesTipTra = "Muestras médicas (Art. 3 RG 24 / 2014)"; }
 
-                gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
-                gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
+                if (tablacab.Equals("OINV"))
+                {
+                    gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
+                    gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
+                }
+                    
                 gOpeCom.iTImp = oDatos.Fields.Item(24).Value.ToString();
                 gOpeCom.cMoneOpe = oDatos.Fields.Item(8).Value.ToString();
                 //en caso de que sea DOLAR
