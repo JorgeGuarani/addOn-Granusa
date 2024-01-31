@@ -54,6 +54,7 @@ namespace BOTONSAP
         public static string v_addOn = "GRANUSA_FE(x86)";
         public static bool v_permiso = true;
         public static bool v_Jenga = false;
+        public static bool b_doc = false;
 
         static void Main(string[] args)
         {
@@ -745,6 +746,7 @@ namespace BOTONSAP
                     //una vez terminado el proceso de creacion de la factura, consultamos el docentry de la factura creada y consumimos el web service
                     if (pVal.BeforeAction == false && pVal.ActionSuccess == true && pVal.ItemUID == "1" && pVal.FormTypeEx == "133" && pVal.EventType == BoEventTypes.et_ITEM_PRESSED && pVal.FormMode == 3)
                     {
+                        b_doc = true;
                         SAPbouiCOM.Form oForm = SBO_Application.Forms.Item(FormUID);
                         //string codigo = oText.Value;
                         string tablacab = "OINV";
@@ -760,6 +762,7 @@ namespace BOTONSAP
                         if (v_cancel.Equals("N"))
                         {
                             CrearDocumento(codigo, tablacab, tabladet, "1", "FACTURA", "Factura electrónica");
+                            b_doc = false;
                         }
                         //SBO_Application.StatusBar.SetText("Factura generada con exito ", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
                         //botonAdd = "";
@@ -1509,9 +1512,11 @@ namespace BOTONSAP
                         string v_folio = oFolio.Value;
                         string v_docNum = oDocNum.Value;
                         string v_estado = oEstado.Value;
+                        b_doc = true;
                         if (!string.IsNullOrEmpty(v_folio) && v_estado.Equals("RECHAZADO"))
                         {
                             ReenvioNotaRemision(v_docNum, "ODLN", "DLN1", v_folio);
+                            b_doc = false;
                             //buscamos el documento creado
                             oForm.Mode = BoFormMode.fm_FIND_MODE;
                             SAPbouiCOM.Button oButton = (SAPbouiCOM.Button)oForm.Items.Item("1").Specific;
@@ -3746,4481 +3751,4485 @@ namespace BOTONSAP
         {
             try
             {
-                //BasicHttpBinding httpBinding = new BasicHttpBinding();
-                //httpBinding.MaxReceivedMessageSize = Int32.MaxValue;
-                //httpBinding.MaxBufferSize = Int32.MaxValue;
-
-                if (false == oCompany.InTransaction)
+                if (b_doc == true)
                 {
-                    oCompany.StartTransaction();
-                }
-                //buscamos el establecimeinto y punto de exp correspondiente
-                SAPbobsCOM.Recordset oSeriesDatos;
-                oSeriesDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oSeriesDatos.DoQuery("SELECT T1.\"BeginStr\",T1.\"EndStr\" FROM " + tablacab + " T0 INNER JOIN NNM1 T1 ON T0.\"Series\"=T1.\"Series\" WHERE T0.\"DocNum\"='" + codigo + "'");
-                //procedemos a actualizar el documento
-                SAPbobsCOM.Recordset oDocAct;
-                oDocAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oDocAct.DoQuery("UPDATE " + tablacab + " SET \"U_PEMI\"='" + oSeriesDatos.Fields.Item(1).Value.ToString() + "',\"U_ESTA\"='" + oSeriesDatos.Fields.Item(0).Value.ToString() + "' WHERE \"DocNum\"='" + codigo + "' ");
+                    //BasicHttpBinding httpBinding = new BasicHttpBinding();
+                    //httpBinding.MaxReceivedMessageSize = Int32.MaxValue;
+                    //httpBinding.MaxBufferSize = Int32.MaxValue;
 
-                Recordset oDire;
-                oDire = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oDire.DoQuery("select \"PayToCode\",\"ShipToCode\" from " + tablacab + " where \"DocNum\"='" + codigo + "'");
-                string direPay = oDire.Fields.Item(0).Value.ToString();
-                string direShip = oDire.Fields.Item(1).Value.ToString();
-                //proceso para mandar documento
-                //consultamos los datos del documento
-                Recordset oDatos;
-                oDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                //consultamos cual direccion se eligio              
-
-                #region QUERY DOCUMENTO
-                //if (!string.IsNullOrEmpty(direPay))
-                //{
-
-                //    //GRANUSA
-                //    oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                //                   "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
-                //                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
-                //                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                //                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                //                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
-                //                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
-                //                   "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
-                //                   "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END ,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
-                //                   "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
-                //                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                //                   "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\"  " +
-                //                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
-                //                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
-                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
-                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
-                //                   "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
-                //                   "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
-                //                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
-                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
-                //                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                //                   "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
-                //                   "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
-                //                   //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
-                //                   "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
-                //                   "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
-                //                   "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
-                //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
-                //                   "WHERE T0.\"DocNum\"='" + codigo + "'");
-                //    // }
-                //}
-                if (!string.IsNullOrEmpty(direPay))
-                {
-
-                    //GRANUSA
-                    oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                   "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
-                                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
-                                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
-                                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
-                                   "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
-                                   "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
-                                   "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
-                                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                   "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\",T2.\"E_Mail\"  " +
-                                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
-                                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"PayToCode\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
-                                   "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
-                                   "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
-                                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
-                                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                                   "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
-                                   "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
-                                   //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
-                                   "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
-                                   "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
-                                   "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
-                                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
-                                   "WHERE T0.\"DocNum\"='" + codigo + "'");
-                    // }
-                }
-                #endregion
-
-                string Entry = oDatos.Fields.Item(0).Value.ToString();
-                string electronico = oDatos.Fields.Item(30).Value.ToString();
-                string trans = oDatos.Fields.Item(31).Value.ToString();
-                string NumSerie = oDatos.Fields.Item(17).Value.ToString();
-                string DocNum = oDatos.Fields.Item(45).Value.ToString();
-                //receptor
-                string rec_dep = oDatos.Fields.Item(46).Value.ToString();
-                string rec_dist = oDatos.Fields.Item(47).Value.ToString();
-                string rec_loc = oDatos.Fields.Item(48).Value.ToString();
-                //salida
-                string valorSalida = oDatos.Fields.Item(49).Value.ToString();
-                string sal_dep = null;
-                string sal_dist = null;
-                string sal_loc = null;
-                //responsable del flete
-                string RespFlete = oDatos.Fields.Item(50).Value.ToString();
-                string CodLicitacion = oDatos.Fields.Item(51).Value.ToString();
-                string transId = oDatos.Fields.Item(52).Value.ToString();
-                string infoadicional = oDatos.Fields.Item(53).Value.ToString();
-
-                string direccionRec = oDatos.Fields.Item(5).Value.ToString();
-                string correo = oDatos.Fields.Item(58).Value.ToString();
-
-                string valorG = valorSalida;
-                string[] guion = valorG.Split('-');
-                int g = 0;
-                foreach (string valor2 in guion)
-                {
-                    if (g == 0)
-                    {
-                        sal_dep = valor2;
-                    }
-                    if (g == 1)
-                    {
-                        sal_dist = valor2;
-                    }
-                    if (g == 2)
-                    {
-                        sal_loc = valor2;
-                    }
-                    g++;
-                }
-                //consulta para saber cuantas lineas posee el documento par poder instanciar el objeto de acuerdo a la cantidad de fila
-                Recordset oLineas;
-                oLineas = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oLineas.DoQuery("select COUNT(*) from " + tabladet + " where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
-                int i = int.Parse(oLineas.Fields.Item(0).Value.ToString());
-                //consultamos a traves de la serie, el folio, establecimiento y punto de expedición
-                Recordset oSerie;
-                oSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oSerie.DoQuery("SELECT \"BeginStr\",\"EndStr\",CASE WHEN \"NextFolio\" IS NULL THEN 0+1 ELSE \"NextFolio\"+1 END,\"Remark\" FROM NNM1 WHERE \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
-                string esta = oSerie.Fields.Item(0).Value.ToString();
-                string pun = oSerie.Fields.Item(1).Value.ToString();
-                int folio = int.Parse(oSerie.Fields.Item(2).Value.ToString());
-                string timbrado = oSerie.Fields.Item(3).Value.ToString();
-                //actualizamos el folio de la factura
-                Recordset oActUDF;
-                oActUDF = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oActUDF.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"U_TIMB\"='" + timbrado + "' where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
-                // //actualizamos la numeracion de la serie           
-                // Recordset oActSerie;
-                // oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                // oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());         
-                //deconstruimos el RUC del emisor
-                string varE = oDatos.Fields.Item(18).Value.ToString();
-                int indexE = varE.IndexOf("-");
-                int canE = oDatos.Fields.Item(18).Value.ToString().Length;
-                string rucE = oDatos.Fields.Item(18).Value.ToString().Remove(indexE, canE - indexE);
-                string dvE = oDatos.Fields.Item(18).Value.ToString().Remove(0, indexE + 1);
-                //deconstruimos el RUC del cliente
-                string var = null;
-                int index = 0;
-                int can = 0;
-                string ruc = null;
-                string dv = null;
-                if (oDatos.Fields.Item(26).Value.ToString() == "1")
-                {
-                    var = oDatos.Fields.Item(4).Value.ToString();
-                    index = var.IndexOf("-");
-                    can = oDatos.Fields.Item(4).Value.ToString().Length;
-                    ruc = oDatos.Fields.Item(4).Value.ToString().Remove(index, can - index);
-                    dv = oDatos.Fields.Item(4).Value.ToString().Remove(0, index + 1);
-                    //instaciamos los objetos que vutilizaremos
-                }
-
-                #region INSTANCIAR OBJETOS
-                servicio.FacturacionElectronicaClient cliente = new servicio.FacturacionElectronicaClient();
-                servicio.procesarLotePorFacturaRequest procesarFactura = new servicio.procesarLotePorFacturaRequest();
-                servicio.procesarDocumento procesarDocumento = new servicio.procesarDocumento();
-                servicio.procesarDocumento[] procesarDocumento2 = new servicio.procesarDocumento[1];
-                servicio.rDE rDE = new servicio.rDE();
-                servicio.DE DE = new servicio.DE();
-                servicio.gOpeDE gOpeDE = new servicio.gOpeDE();
-                servicio.gTimb gTimb = new servicio.gTimb();
-                servicio.gDatGralOpe gDatGralOpe = new servicio.gDatGralOpe();
-                servicio.gOpeCom gOpeCom = new servicio.gOpeCom();
-                servicio.gEmis gEmis = new servicio.gEmis();
-                servicio.gDatRec gDatRec = new servicio.gDatRec();
-                servicio.gCamFE gCamFE = new servicio.gCamFE();
-                servicio.gCamFEE gCamFEE = new servicio.gCamFEE();
-                servicio.gCamFEI gCamFEI = new servicio.gCamFEI();
-                servicio.gCamAE gCamAE = new servicio.gCamAE();
-                servicio.gCamNCDE gCamNCDE = new servicio.gCamNCDE();
-                servicio.gCamNRE gCamNRE = new servicio.gCamNRE();
-                servicio.gDtipDE gDtipDE = new servicio.gDtipDE();
-                servicio.gCamCond gCamCond = new servicio.gCamCond();
-                servicio.gCamItem gCamItem = new servicio.gCamItem();
-                servicio.gCamItem[] gCamItem1 = new servicio.gCamItem[2];
-                servicio.gValorItem gValorItem = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA = new servicio.gCamIVA();
-                servicio.gActEco gActEco = new servicio.gActEco();
-                servicio.gActEco[] gActEco1 = new servicio.gActEco[1];
-                servicio.gRespDE gResPDE = new servicio.gRespDE();
-                servicio.gCompPub gCompPub = new servicio.gCompPub();
-                servicio.gPaConEIni gPaConEIni = new servicio.gPaConEIni();
-                servicio.gPaConEIni[] gPaConEIni1 = new servicio.gPaConEIni[1];
-                servicio.gPagCheq gPagCheq = new servicio.gPagCheq();
-                servicio.gPagTarCD gPagTarCD = new servicio.gPagTarCD();
-                servicio.gPagCred gPagCred = new servicio.gPagCred();
-                servicio.gCuotas gCuotas = new servicio.gCuotas();
-                servicio.gCuotas[] gCuotas1 = new servicio.gCuotas[1];
-                servicio.gVehNuevo gVehNuevo = new servicio.gVehNuevo();
-                servicio.gRasMerc gRasMerc = new servicio.gRasMerc();
-                servicio.gCamEsp gCamEsp = new servicio.gCamEsp();
-                servicio.gGrupAdi gGrupAdi = new servicio.gGrupAdi();
-                servicio.gGrupEner gGrupEner = new servicio.gGrupEner();
-                servicio.gGrupSeg gGrupSeg = new servicio.gGrupSeg();
-                servicio.gGrupPolSeg gGrupPolSeg = new servicio.gGrupPolSeg();
-                servicio.gGrupPolSeg[] gGrupPolSeg1 = new servicio.gGrupPolSeg[1];
-                servicio.gGrupSup gGrupSup = new servicio.gGrupSup();
-                servicio.gTransp gTransp = new servicio.gTransp();
-                servicio.gCamEnt gCamEnt = new servicio.gCamEnt();
-                servicio.gCamEnt[] gCamEnt1 = new servicio.gCamEnt[1];
-                servicio.gCamSal gCamSal = new servicio.gCamSal();
-                servicio.gCamTrans gCamTrans = new servicio.gCamTrans();
-                servicio.gVehTras gVehTras = new servicio.gVehTras();
-                servicio.gVehTras[] gVehTras1 = new servicio.gVehTras[1];
-                servicio.gTotSub gTotSub = new servicio.gTotSub();
-                servicio.gCamGen gCamGen = new servicio.gCamGen();
-                servicio.gCamCarg gCamCarg = new servicio.gCamCarg();
-                servicio.gCamDEAsoc gCamDEAsoc = new servicio.gCamDEAsoc();
-                servicio.gCamDEAsoc[] gCamDEAsoc1 = new servicio.gCamDEAsoc[1];
-                servicio.gCamFuFD gCamFuFD = new servicio.gCamFuFD();
-                servicio.docAsociado docAsociado = new servicio.docAsociado();
-                servicio.docAsociado[] docAsociado1 = new servicio.docAsociado[1];
-                servicio.parametrosProcesamiento parametros = new servicio.parametrosProcesamiento();
-                servicio.resultadoProcesamiento[] resultadoProcesamiento = new servicio.resultadoProcesamiento[1];
-                servicio.documentoElectronicoGenerado[] documentoElectronicoGenerado = new servicio.documentoElectronicoGenerado[1];
-                //instanciamos varias lineas para el detalle
-                #region LINEAS
-                //linea 2
-                servicio.gCamItem gCamItem2 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem2 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem2 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA2 = new servicio.gCamIVA();
-                //linea 3
-                servicio.gCamItem gCamItem3 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem3 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem3 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA3 = new servicio.gCamIVA();
-                //linea 4
-                servicio.gCamItem gCamItem4 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem4 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem4 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA4 = new servicio.gCamIVA();
-                //linea 5
-                servicio.gCamItem gCamItem5 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem5 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem5 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA5 = new servicio.gCamIVA();
-                //linea 6
-                servicio.gCamItem gCamItem6 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem6 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem6 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA6 = new servicio.gCamIVA();
-                //linea 7
-                servicio.gCamItem gCamItem7 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem7 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem7 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA7 = new servicio.gCamIVA();
-                //linea 8
-                servicio.gCamItem gCamItem8 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem8 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem8 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA8 = new servicio.gCamIVA();
-                //linea 9
-                servicio.gCamItem gCamItem9 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem9 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem9 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA9 = new servicio.gCamIVA();
-                //linea 10
-                servicio.gCamItem gCamItem10 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem10 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem10 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA10 = new servicio.gCamIVA();
-                //linea11
-                servicio.gCamItem gCamItem11 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem11 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem11 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA11 = new servicio.gCamIVA();
-                //linea 12
-                servicio.gCamItem gCamItem12 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem12 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem12 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA12 = new servicio.gCamIVA();
-                //linea 13
-                servicio.gCamItem gCamItem13 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem13 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem13 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA13 = new servicio.gCamIVA();
-                //linea 14
-                servicio.gCamItem gCamItem14 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem14 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem14 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA14 = new servicio.gCamIVA();
-                //linea 15
-                servicio.gCamItem gCamItem15 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem15 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem15 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA15 = new servicio.gCamIVA();
-                //linea 16
-                servicio.gCamItem gCamItem16 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem16 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem16 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA16 = new servicio.gCamIVA();
-                //linea 17
-                servicio.gCamItem gCamItem17 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem17 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem17 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA17 = new servicio.gCamIVA();
-                //linea 18
-                servicio.gCamItem gCamItem18 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem18 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem18 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA18 = new servicio.gCamIVA();
-                //linea 19
-                servicio.gCamItem gCamItem19 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem19 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem19 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA19 = new servicio.gCamIVA();
-                //linea 20
-                servicio.gCamItem gCamItem20 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem20 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem20 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA20 = new servicio.gCamIVA();
-                //linea 21
-                servicio.gCamItem gCamItem21 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem21 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem21 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA21 = new servicio.gCamIVA();
-                //linea 22
-                servicio.gCamItem gCamItem22 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem22 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem22 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA22 = new servicio.gCamIVA();
-                //linea 23
-                servicio.gCamItem gCamItem23 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem23 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem23 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA23 = new servicio.gCamIVA();
-                //linea 24
-                servicio.gCamItem gCamItem24 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem24 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem24 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA24 = new servicio.gCamIVA();
-                //linea 25
-                servicio.gCamItem gCamItem25 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem25 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem25 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA25 = new servicio.gCamIVA();
-                //linea 26
-                servicio.gCamItem gCamItem26 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem26 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem26 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA26 = new servicio.gCamIVA();
-                //linea 27
-                servicio.gCamItem gCamItem27 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem27 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem27 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA27 = new servicio.gCamIVA();
-                //linea 28
-                servicio.gCamItem gCamItem28 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem28 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem28 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA28 = new servicio.gCamIVA();
-                //linea 29
-                servicio.gCamItem gCamItem29 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem29 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem29 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA29 = new servicio.gCamIVA();
-                //linea 30
-                servicio.gCamItem gCamItem30 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem30 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem30 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA30 = new servicio.gCamIVA();
-                //linea 31
-                servicio.gCamItem gCamItem31 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem31 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem31 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA31 = new servicio.gCamIVA();
-                //linea 32
-                servicio.gCamItem gCamItem32 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem32 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem32 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA32 = new servicio.gCamIVA();
-                //linea 33
-                servicio.gCamItem gCamItem33 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem33 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem33 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA33 = new servicio.gCamIVA();
-                //linea 34
-                servicio.gCamItem gCamItem34 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem34 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem34 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA34 = new servicio.gCamIVA();
-                //linea 35
-                servicio.gCamItem gCamItem35 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem35 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem35 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA35 = new servicio.gCamIVA();
-                //linea 36
-                servicio.gCamItem gCamItem36 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem36 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem36 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA36 = new servicio.gCamIVA();
-                //linea 37
-                servicio.gCamItem gCamItem37 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem37 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem37 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA37 = new servicio.gCamIVA();
-                //linea 38
-                servicio.gCamItem gCamItem38 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem38 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem38 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA38 = new servicio.gCamIVA();
-                //linea 39
-                servicio.gCamItem gCamItem39 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem39 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem39 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA39 = new servicio.gCamIVA();
-                //linea 40
-                servicio.gCamItem gCamItem40 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem40 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem40 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA40 = new servicio.gCamIVA();
-                //linea 41
-                servicio.gCamItem gCamItem41 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem41 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem41 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA41 = new servicio.gCamIVA();
-                //linea 42
-                servicio.gCamItem gCamItem42 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem42 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem42 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA42 = new servicio.gCamIVA();
-                //linea 43
-                servicio.gCamItem gCamItem43 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem43 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem43 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA43 = new servicio.gCamIVA();
-                //linea 44
-                servicio.gCamItem gCamItem44 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem44 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem44 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA44 = new servicio.gCamIVA();
-                //linea 45
-                servicio.gCamItem gCamItem45 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem45 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem45 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA45 = new servicio.gCamIVA();
-                #endregion
-                #endregion
-
-                //armamos la estructura que enviaremos con los datos
-                //gOpeDE
-                gOpeDE.iTipEmi = "1";
-                string oper = oDatos.Fields.Item(25).Value.ToString();
-                if (!string.IsNullOrEmpty(infoadicional))
-                {
-                    gOpeDE.dInfoEmi = infoadicional;
-                }
-                //gTimb
-                gTimb.iTiDE = documento;
-                gTimb.dDesTiDE = descdoc;
-                gTimb.dNumTim = timbrado;
-                gTimb.dEst = esta;
-                gTimb.dPunExp = pun;
-                gTimb.dNumDoc = folio.ToString("D7");
-                //gDatGralOpe
-                //armamos el formato de la fecha
-                string hora = oDatos.Fields.Item(21).Value.ToString();
-                DateTime fe = Convert.ToDateTime(oDatos.Fields.Item(7).Value.ToString());
-                string fecha = fe.ToString("yyyy-MM-dd") + "T" + hora; //oDatos.Fields.Item(7).Value.ToString("yyyy-MM-dd") + "T" + hora;        
-                gDatGralOpe.dFeEmiDE = DateTime.Parse(fecha);//DateTime.Parse("2022-11-01T17:41:55");
-                gDatGralOpe.dFeEmiDESpecified = true;
-                //gOpeCom
-                //tipo de transaccion
-                string transaccion = oDatos.Fields.Item(23).Value.ToString();
-                string TipTra = null;
-                string DesTipTra = null;
-                if (transaccion.Equals("1")) { TipTra = "1"; DesTipTra = "Venta de mercadería"; }
-                if (transaccion.Equals("2")) { TipTra = "2"; DesTipTra = "Prestación de servicios"; }
-                if (transaccion.Equals("3")) { TipTra = "3"; DesTipTra = "Mixto (Venta de mercadería y servicios) "; }
-                if (transaccion.Equals("4")) { TipTra = "4"; DesTipTra = "Venta de activo fijo"; }
-                if (transaccion.Equals("5")) { TipTra = "5"; DesTipTra = "Venta de divisas"; }
-                if (transaccion.Equals("6")) { TipTra = "6"; DesTipTra = "Compra de divisas"; }
-                if (transaccion.Equals("7")) { TipTra = "7"; DesTipTra = "Promoción o entrega de muestras"; }
-                if (transaccion.Equals("8")) { TipTra = "8"; DesTipTra = "Donación"; }
-                if (transaccion.Equals("9")) { TipTra = "9"; DesTipTra = "Anticipo"; }
-                if (transaccion.Equals("10")) { TipTra = "10"; DesTipTra = "Compra de productos"; }
-                if (transaccion.Equals("11")) { TipTra = "11"; DesTipTra = "Compra de servicios"; }
-                if (transaccion.Equals("12")) { TipTra = "12"; DesTipTra = "Venta de crédito fiscal"; }
-                if (transaccion.Equals("13")) { TipTra = "13"; DesTipTra = "Muestras médicas (Art. 3 RG 24 / 2014)"; }
-
-                if (tablacab.Equals("OINV"))
-                {
-                    gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
-                    gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
-                }
-                
-                gOpeCom.iTImp = oDatos.Fields.Item(24).Value.ToString();
-                gOpeCom.cMoneOpe = oDatos.Fields.Item(8).Value.ToString();
-                //en caso de que sea DOLAR
-                if (oDatos.Fields.Item(8).Value.ToString() == "USD")
-                {
-                    gOpeCom.dCondTiCam = "1";
-                    gOpeCom.dTiCam = decimal.Parse(oDatos.Fields.Item(28).Value.ToString());
-                    gOpeCom.dTiCamSpecified = true;
-                }
-                //gEmis
-                gEmis.dRucEm = rucE;
-                gEmis.dDVEmi = dvE;
-                //gEmis.dDirEmi = "";//la direccion del punto de expedicion           
-                //gDatRec
-                gDatRec.iNatRec = oDatos.Fields.Item(26).Value.ToString();
-                if (oDatos.Fields.Item(26).Value.ToString() == "2")
-                {
-                    gDatRec.iTiOpe = "2";
-                    //gDatRec.iTiContRec = "1";
-                }
-                else
-                {
-                    gDatRec.iTiOpe = oDatos.Fields.Item(25).Value.ToString();
-                    gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
-                }
-                if (!string.IsNullOrEmpty(correo))
-                {
-                    gDatRec.dEmailRec = correo;
-                }              
-                //gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
-                //validad si el pais esta vacio, enviar PRY por defecto
-                string pais = oDatos.Fields.Item(16).Value.ToString();
-                if (string.IsNullOrEmpty(pais))
-                {
-                    gDatRec.cPaisRec = "PRY";
-                }
-                else
-                {
-                    gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
-                }
-
-                //gDatRec.dDesPaisRe = "Paraguay";
-
-                if (tablacab.Equals("ORIN"))
-                {
-                    gCamNCDE.iMotEmi = "1";//hay que modificar
-                }
-                //si es contribuyente le pasamos el ruc sino la cedula
-                if (oDatos.Fields.Item(26).Value.ToString() == "1" || oDatos.Fields.Item(26).Value.ToString() == "3")
-                {
-                    gDatRec.dRucRec = ruc;
-                    gDatRec.dDVRec = dv;
-                }
-                else
-                {
-                    gDatRec.dNumIDRec = oDatos.Fields.Item(4).Value.ToString();
-                    gDatRec.iTipIDRec = "1";
-                }
-
-                if (tablacab.Equals("OINV"))
-                {
-                    //REMITO
-                    #region REMITO
-                    if (!string.IsNullOrEmpty(trans))
-                    {
-                        string chof = oDatos.Fields.Item(32).Value.ToString();
-                        if (!chof.Equals("PERSONAL"))
-                        {
-                            string CedChofer = oDatos.Fields.Item(35).Value.ToString();
-                            if (!string.IsNullOrEmpty(CedChofer))
-                            {
-                                string dirReceptor = oDatos.Fields.Item(5).Value.ToString();
-                                string NewDirRec = null;
-                                if (!Regex.IsMatch(dirReceptor, @"^[a-zA-Z-0-9]+$") == true)
-                                {
-                                    NewDirRec = Regex.Replace(dirReceptor, @"[^0-9a-zA-Z ]+", "");
-
-                                }
-                                else
-                                {
-                                    NewDirRec = dirReceptor;
-
-                                }
-                                string salDire = oDatos.Fields.Item(37).Value.ToString();
-                                string newsalDire = null;
-                                if (!Regex.IsMatch(salDire, @"^[a-zA-Z-0-9]+$") == true)
-                                {
-                                    newsalDire = Regex.Replace(salDire, @"[^0-9a-zA-Z ]+", "");
-
-                                }
-                                else
-                                {
-                                    newsalDire = salDire;
-
-                                }
-                                string DomFiscal = oDatos.Fields.Item(42).Value.ToString();
-                                string newDomFiscal = null;
-                                if (!Regex.IsMatch(DomFiscal, @"^[a-zA-Z-0-9]+$") == true)
-                                {
-                                    newDomFiscal = Regex.Replace(DomFiscal, @"[^0-9a-zA-Z ]+", "");
-
-                                }
-                                else
-                                {
-                                    newDomFiscal = DomFiscal;
-
-                                }
-                                string DireChofer = oDatos.Fields.Item(36).Value.ToString();
-                                string newDireChofer = null;
-                                if (!Regex.IsMatch(DireChofer, @"^[a-zA-Z-0-9]+$") == true)
-                                {
-                                    newDireChofer = Regex.Replace(DireChofer, @"[^0-9a-zA-Z ]+", "");
-
-                                }
-                                else
-                                {
-                                    newDireChofer = DireChofer;
-
-                                }
-                                string codTransp = null;
-                                string descTrans = null;
-                                if (oDatos.Fields.Item(38).Value.ToString() == varE)
-                                {
-                                    codTransp = "1";
-                                    descTrans = "Propio";
-                                }
-                                else
-                                {
-                                    codTransp = "2";
-                                    descTrans = "Tercero";
-                                }
-                                gDatRec.dDirRec = NewDirRec;// oDatos.Fields.Item(5).Value.ToString();
-                                gDatRec.dNumCasRec = "0";
-                                gDatRec.cDepRec = rec_dep;
-                                gDatRec.cDisRec = rec_dist;
-                                gDatRec.cCiuRec = rec_loc;
-                                //gCamSal               
-                                gCamSal.dDirLocSal = newsalDire;// oDatos.Fields.Item(37).Value.ToString();
-                                gCamSal.dNumCasSal = "0";
-                                //gCamSal.dComp1Sal =  "aviadores del chaco";
-                                gCamSal.cDepSal = sal_dep;
-                                gCamSal.cCiuSal = sal_loc;
-                                gCamSal.cDisSal = sal_dist;
-                                //gCamEnt
-                                gCamEnt.dDirLocEnt = NewDirRec;// oDatos.Fields.Item(5).Value.ToString();
-                                gCamEnt.dNumCasEnt = "0";
-                                gCamEnt.cDepEnt = rec_dep;
-                                gCamEnt.cCiuEnt = rec_loc;
-                                gCamEnt.cDisEnt = rec_dist;
-                                gCamEnt1[0] = gCamEnt;
-                                gTransp.iTipTrans = codTransp;// "2";
-                                gTransp.dDesTipTrans = descTrans;// "Tercero";
-                                gTransp.iModTrans = "1";
-                                gTransp.iRespFlete = RespFlete;
-                                gTransp.dIniTras = fe;
-                                gTransp.dIniTrasSpecified = true;
-                                gTransp.dFinTras = fe;
-                                gTransp.dFinTrasSpecified = true;
-                                //gVehTras
-                                //gTransp.gVehTras = gVehTras1;
-                                gVehTras1[0] = gVehTras;
-                                gVehTras.dTiVehTras = "Terrestre";
-                                gVehTras.dMarVeh = oDatos.Fields.Item(34).Value.ToString();
-                                gVehTras.dTipIdenVeh = "2";
-                                gVehTras.dNroMatVeh = oDatos.Fields.Item(33).Value.ToString();
-                                //gCamTrans
-                                gCamTrans.iNatTrans = oDatos.Fields.Item(40).Value.ToString();
-                                gCamTrans.dNomTrans = oDatos.Fields.Item(39).Value.ToString();
-                                //deconstruimos el RUC del transportista
-                                string varCam = oDatos.Fields.Item(38).Value.ToString();
-                                int indexCam = varCam.IndexOf("-");
-                                int canCam = oDatos.Fields.Item(38).Value.ToString().Length;
-                                string rucCam = oDatos.Fields.Item(38).Value.ToString().Remove(indexCam, canCam - indexCam);
-                                string dvCam = oDatos.Fields.Item(38).Value.ToString().Remove(0, indexCam + 1);
-                                gCamTrans.dRucTrans = rucCam;
-                                gCamTrans.dDVTrans = dvCam;
-                                gCamTrans.cNacTrans = oDatos.Fields.Item(43).Value.ToString();
-                                gCamTrans.dDesNacTrans = oDatos.Fields.Item(44).Value.ToString();
-                                gCamTrans.dDomFisc = newDomFiscal;// oDatos.Fields.Item(42).Value.ToString();
-                                gCamTrans.dNumIDChof = oDatos.Fields.Item(35).Value.ToString();
-                                gCamTrans.dNomChof = oDatos.Fields.Item(32).Value.ToString();
-                                gCamTrans.dDirChof = newDireChofer;// oDatos.Fields.Item(36).Value.ToString();
-                                                                   //gCamNRE
-                                                                   //gCamNRE.iMotEmiNR = "1";
-                                                                   //gCamNRE.dDesMotEmiNR = "Traslado por ventas";
-                                                                   //gCamNRE.iRespEmiNR = "1";
-                                                                   //gCamNRE.dDesRespEmiNR = "Emisor de la factura";
-                                gCamNRE.dKmR = "3";
-                                //gDtipDE.gCamNRE = gCamNRE;
-                                gTransp.gCamTrans = gCamTrans;
-                                gTransp.gCamSal = gCamSal;
-                                gTransp.gCamEnt = gCamEnt1;
-                                gTransp.gVehTras = gVehTras1;
-                                gDtipDE.gTransp = gTransp;
-                            }
-
-                        }
-
-
-                    }
-                    #endregion
-                }
-
-                //LICITACION
-                #region LICITACION
-                if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                {
-                    Recordset oLicitacion;
-                    oLicitacion = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oLicitacion.DoQuery("SELECT \"U_dModCont\",\"U_dEntCont\",\"U_dAnoCont\",\"U_dSecCont\",\"U_dFeCodCont\" FROM \"@LICITACION\" WHERE \"U_LICI\"='" + CodLicitacion + "'");
-
-                    gCompPub.dModCont = oLicitacion.Fields.Item(0).Value.ToString();//"LP";
-                    gCompPub.dEntCont = oLicitacion.Fields.Item(1).Value.ToString(); //"12009";
-                    gCompPub.dAnoCont = oLicitacion.Fields.Item(2).Value.ToString(); //"22";
-                    int sec = int.Parse(oLicitacion.Fields.Item(3).Value.ToString());
-                    gCompPub.dSecCont = sec.ToString("D7");// oLicitacion.Fields.Item(3).Value.ToString(); //"218529";
-                    DateTime v_fechaLic = DateTime.Parse(oLicitacion.Fields.Item(4).Value.ToString());
-                    string fechalic_v = v_fechaLic.ToString("yyyy-MM-dd");
-                    gCompPub.dFeCodCont = DateTime.Parse(fechalic_v);//DateTime.Parse("2022-08-31");
-                    gCompPub.dFeCodContSpecified = true;
-                    gCamFE.gCompPub = gCompPub;
-                    //gDtipDE.gCamFE = gCamFE;
-                }
-                #endregion
-
-
-
-                gDatRec.dNomRec = oDatos.Fields.Item(3).Value.ToString();//"BIGGIE S.A - LAMBARE ROA BASTOS";
-                                                                         //gDatRec.dDirRec = oDatos.Fields.Item(5).Value.ToString();//"AVDA AUGUSTO ROA BASTOS esq San Marcos";
-                                                                         //gDatRec.dNumCasRec = "0";
-                gDatRec.dTelRec = oDatos.Fields.Item(6).Value.ToString();//"021615257";
-                                                                         //gDatRec.dCelRec = "0981888493";
-                                                                         //consultamos si es credito o contado a operacion
-                string condicion = oDatos.Fields.Item(9).Value.ToString();
-                if (tablacab.Equals("OINV"))
-                {
-                    //gCamFE
-                    gCamFE.iIndPres = oDatos.Fields.Item(22).Value.ToString();
-                    //gCamCond
-                    gCamCond.iCondOpe = oDatos.Fields.Item(9).Value.ToString(); //"2";               
-
-                    if (oDatos.Fields.Item(9).Value.ToString() == "2")
-                    {
-                        //consultamos si el campo de cuota es mayor a cero
-                        int Cuota = int.Parse(oDatos.Fields.Item(20).Value.ToString());
-                        string concred = null;
-                        if (Cuota > 0)
-                        {
-                            concred = "2";
-                        }
-                        else
-                        {
-                            concred = "1";
-                        }
-                        if (concred.Equals("2"))
-                        {
-                            gPagCred.dCuotas = Cuota.ToString();
-                            gPagCred.iCondCred = concred;
-                        }
-                        else
-                        {
-                            //gPagCred
-                            int plazo = int.Parse(oDatos.Fields.Item(10).Value.ToString());
-                            gPagCred.dPlazoCre = plazo.ToString("D2");//oDatos.Fields.Item(10).Value.ToString(); //"12";
-                            gPagCred.iCondCred = concred;
-                        }
-                    }
-                }
-                //si es contado mandamos el tipo de pago
-                if (condicion.Equals("1"))
-                {
-                    gPaConEIni.iTiPago = "1";
-                    gPaConEIni.dMonTiPag = decimal.Parse(oDatos.Fields.Item(29).Value.ToString());
-                    gPaConEIni.cMoneTiPag = oDatos.Fields.Item(8).Value.ToString();
-                    if (oDatos.Fields.Item(8).Value.ToString() == "USD")
-                    {
-                        gPaConEIni.dTiCamTiPag = decimal.Parse(oDatos.Fields.Item(28).Value.ToString());
-                        gPaConEIni.dTiCamTiPagSpecified = true;
-                    }
-                    gPaConEIni1[0] = gPaConEIni;
-                }
-                //gCamItem
-                int f = 0;
-                //gCamItem1.Initialize();
-                //recorremos el recordset y mandamos los datos del detalle al objeto
-
-                //conexion
-                if (false == oCompany.InTransaction)
-                {
-                    oCompany.StartTransaction();
-                }
-                //convertir el decimall a int
-                int v_deciGR = int.Parse(v_DecimalGR);
-                string v_monedaDoc = oDatos.Fields.Item(8).Value.ToString();
-                while (!oDatos.EoF)
-                {
-                    //calculo para la gravada e iva
-                    decimal c_gravada10 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,1"));
-                    decimal c_iva10 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"))));
-                    decimal c_gravada5 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,05"));
-                    decimal c_iva5 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"))));
-
-                    #region DETALLE DOCUMENTO
-                    if (f == 0)
-                    {
-                        gCamItem.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem.dDncpG = dncpNum.ToString();
-                        }
-
-                        //gValorItem
-
-                        string pp = oDatos.Fields.Item(14).Value.ToString();
-                        gValorItem.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem.dDescItem = 0;
-                            gValorRestaItem.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem.dDescItem = 0;
-                            gValorRestaItem.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        //gValorItem
-                        //gValorItem.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        //gValorRestaItem.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;
-                        //gValorRestaItem.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA.iAfecIVA = "1";
-                            gCamIVA.dPropIVA = 100;
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA.dPropIVA = 100;
-                                    gCamIVA.dBasGravIVA = c_gravada10;// Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,1"));
-                                    gCamIVA.dLiqIVAItem = c_iva10;//Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"))));
-                                }
-                                else
-                                {
-                                    gCamIVA.dPropIVA = 100;
-                                    gCamIVA.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA.dBasGravIVA = c_gravada5;// Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA.dPropIVA = 100;
-                                    gCamIVA.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA.iAfecIVA = "3";
-                            gCamIVA.dBasGravIVA = 0;
-                            gCamIVA.dLiqIVAItem = 0;
-                        }
-                        gCamIVA.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem.gValorRestaItem = gValorRestaItem;
-                        gCamItem.gValorItem = gValorItem;
-                        gCamItem.gCamIVA = gCamIVA;
-                        gCamItem1[f] = gCamItem;
-                    }
-                    if (f == 1)
-                    {
-                        gCamItem2.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem2.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem2.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem2.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem2.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem2.dDncpG = dncpNum.ToString();
-                        }
-
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem2.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem2.dDescItem = 0;
-                            gValorRestaItem2.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem2.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem2.dDescItem = 0;
-                            gValorRestaItem2.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem                       
-                        //gValorRestaItem2.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA2.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA2.dPropIVA = 100;
-                                    gCamIVA2.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA2.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA2.dPropIVA = 100;
-                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA2.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA2.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA2.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA2.dPropIVA = 100;
-                                    gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA2.iAfecIVA = "3";
-                            gCamIVA2.dBasGravIVA = 0;
-                            gCamIVA2.dLiqIVAItem = 0;
-                        }
-                        gCamIVA2.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem2.gValorRestaItem = gValorRestaItem2;
-                        gCamItem2.gValorItem = gValorItem2;
-                        gCamItem2.gCamIVA = gCamIVA2;
-                        gCamItem1[f] = gCamItem2;
-                    }
-                    if (f == 2)
-                    {
-                        gCamItem3.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem3.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem3.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem3.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem3.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem3.dDncpG = dncpNum.ToString();
-                        }
-
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem3.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem3.dDescItem = 0;
-                            gValorRestaItem3.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem3.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem3.dDescItem = 0;
-                            gValorRestaItem3.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem3.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem3.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem3.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem3.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA3.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA3.dPropIVA = 100;
-                                    gCamIVA3.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA3.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA3.dPropIVA = 100;
-                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA3.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA3.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA3.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA3.dPropIVA = 100;
-                                    gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA3.iAfecIVA = "3";
-                            gCamIVA3.dBasGravIVA = 0;
-                            gCamIVA3.dLiqIVAItem = 0;
-                        }
-                        gCamIVA3.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem3.gValorRestaItem = gValorRestaItem3;
-                        gCamItem3.gValorItem = gValorItem3;
-                        gCamItem3.gCamIVA = gCamIVA3;
-                        gCamItem1[f] = gCamItem3;
-                    }
-                    if (f == 3)
-                    {
-                        gCamItem4.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem4.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem4.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem4.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem4.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem4.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem4.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem4.dDescItem = 0;
-                            gValorRestaItem4.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem4.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem4.dDescItem = 0;
-                            gValorRestaItem4.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem4.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem4.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem4.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem4.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA4.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA4.dPropIVA = 100;
-                                    gCamIVA4.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA4.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA4.dPropIVA = 100;
-                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA4.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA4.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA4.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA4.dPropIVA = 100;
-                                    gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA4.iAfecIVA = "3";
-                            gCamIVA4.dBasGravIVA = 0;
-                            gCamIVA4.dLiqIVAItem = 0;
-                        }
-                        gCamIVA4.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem4.gValorRestaItem = gValorRestaItem4;
-                        gCamItem4.gValorItem = gValorItem4;
-                        gCamItem4.gCamIVA = gCamIVA4;
-                        gCamItem1[f] = gCamItem4;
-                    }
-                    if (f == 4)
-                    {
-                        gCamItem5.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem5.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem5.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem5.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem5.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem5.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem5.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem5.dDescItem = 0;
-                            gValorRestaItem5.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem5.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem5.dDescItem = 0;
-                            gValorRestaItem5.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem5.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem5.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem5.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem5.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA5.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA5.dPropIVA = 100;
-                                    gCamIVA5.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA5.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA5.dPropIVA = 100;
-                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA5.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA5.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA5.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA5.dPropIVA = 100;
-                                    gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA5.iAfecIVA = "3";
-                            gCamIVA5.dBasGravIVA = 0;
-                            gCamIVA5.dLiqIVAItem = 0;
-                        }
-                        gCamIVA5.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem5.gValorRestaItem = gValorRestaItem5;
-                        gCamItem5.gValorItem = gValorItem5;
-                        gCamItem5.gCamIVA = gCamIVA5;
-                        gCamItem1[f] = gCamItem5;
-                    }
-                    if (f == 5)
-                    {
-                        gCamItem6.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem6.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem6.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem6.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem6.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem6.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem6.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem6.dDescItem = 0;
-                            gValorRestaItem6.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem6.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem6.dDescItem = 0;
-                            gValorRestaItem6.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem6.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem6.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem6.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem6.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA6.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA6.dPropIVA = 100;
-                                    gCamIVA6.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA6.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA6.dPropIVA = 100;
-                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA6.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA6.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA6.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA6.dPropIVA = 100;
-                                    gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA6.iAfecIVA = "3";
-                            gCamIVA6.dBasGravIVA = 0;
-                            gCamIVA6.dLiqIVAItem = 0;
-                        }
-                        gCamIVA6.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem6.gValorRestaItem = gValorRestaItem6;
-                        gCamItem6.gValorItem = gValorItem6;
-                        gCamItem6.gCamIVA = gCamIVA6;
-                        gCamItem1[f] = gCamItem6;
-                    }
-                    if (f == 6)
-                    {
-                        gCamItem7.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem7.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem7.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem7.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem7.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem7.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem7.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem7.dDescItem = 0;
-                            gValorRestaItem7.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem7.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem7.dDescItem = 0;
-                            gValorRestaItem7.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem7.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem7.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem7.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem7.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA7.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA7.dPropIVA = 100;
-                                    gCamIVA7.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA7.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA7.dPropIVA = 100;
-                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA7.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA7.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA7.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA7.dPropIVA = 100;
-                                    gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA7.iAfecIVA = "3";
-                            gCamIVA7.dBasGravIVA = 0;
-                            gCamIVA7.dLiqIVAItem = 0;
-                        }
-                        gCamIVA7.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem7.gValorRestaItem = gValorRestaItem7;
-                        gCamItem7.gValorItem = gValorItem7;
-                        gCamItem7.gCamIVA = gCamIVA7;
-                        gCamItem1[f] = gCamItem7;
-                    }
-                    if (f == 7)
-                    {
-                        gCamItem8.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem8.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem8.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem8.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem8.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem8.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem8.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem8.dDescItem = 0;
-                            gValorRestaItem8.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem8.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem8.dDescItem = 0;
-                            gValorRestaItem8.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem8.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem8.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem8.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem8.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA8.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA8.dPropIVA = 100;
-                                    gCamIVA8.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA8.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA8.dPropIVA = 100;
-                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA8.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA8.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA8.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA8.dPropIVA = 100;
-                                    gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA8.iAfecIVA = "3";
-                            gCamIVA8.dBasGravIVA = 0;
-                            gCamIVA8.dLiqIVAItem = 0;
-                        }
-                        gCamIVA8.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem8.gValorRestaItem = gValorRestaItem8;
-                        gCamItem8.gValorItem = gValorItem8;
-                        gCamItem8.gCamIVA = gCamIVA8;
-                        gCamItem1[f] = gCamItem8;
-                    }
-                    if (f == 8)
-                    {
-                        gCamItem9.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem9.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem9.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem9.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem9.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem9.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem9.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem9.dDescItem = 0;
-                            gValorRestaItem9.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem9.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem9.dDescItem = 0;
-                            gValorRestaItem9.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem9.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem9.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem9.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem9.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA9.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA9.dPropIVA = 100;
-                                    gCamIVA9.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA9.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA9.dPropIVA = 100;
-                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA9.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA9.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA9.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA9.dPropIVA = 100;
-                                    gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA9.iAfecIVA = "3";
-                            gCamIVA9.dBasGravIVA = 0;
-                            gCamIVA9.dLiqIVAItem = 0;
-                        }
-                        gCamIVA9.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem9.gValorRestaItem = gValorRestaItem9;
-                        gCamItem9.gValorItem = gValorItem9;
-                        gCamItem9.gCamIVA = gCamIVA9;
-                        gCamItem1[f] = gCamItem9;
-                    }
-                    if (f == 9)
-                    {
-                        gCamItem10.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem10.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem10.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem10.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem10.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem10.dDncpG = dncpNum.ToString();
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem10.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem10.dDescItem = 0;
-                            gValorRestaItem10.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem10.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem10.dDescItem = 0;
-                            gValorRestaItem10.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem10.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem10.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem10.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem10.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA10.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA10.dPropIVA = 100;
-                                    gCamIVA10.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA10.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA10.dPropIVA = 100;
-                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA10.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA10.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA10.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA10.dPropIVA = 100;
-                                    gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA10.iAfecIVA = "3";
-                            gCamIVA10.dBasGravIVA = 0;
-                            gCamIVA10.dLiqIVAItem = 0;
-                        }
-                        gCamIVA10.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem10.gValorRestaItem = gValorRestaItem10;
-                        gCamItem10.gValorItem = gValorItem10;
-                        gCamItem10.gCamIVA = gCamIVA10;
-                        gCamItem1[f] = gCamItem10;
-                    }
-                    if (f == 10)
-                    {
-                        gCamItem11.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem11.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem11.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem11.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem11.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem11.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem11.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem11.dDescItem = 0;
-                            gValorRestaItem11.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem11.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem11.dDescItem = 0;
-                            gValorRestaItem11.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        //gValorItem
-                        //gValorItem11.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem11.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        //gValorRestaItem11.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;
-                        //gValorRestaItem11.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA11.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA11.dPropIVA = 100;
-                                    gCamIVA11.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA11.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA11.dPropIVA = 100;
-                                    gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA11.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA11.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA11.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA11.dPropIVA = 100;
-                                    gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA11.iAfecIVA = "3";
-                            gCamIVA11.dBasGravIVA = 0;
-                            gCamIVA11.dLiqIVAItem = 0;
-                        }
-                        gCamIVA11.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem11.gValorRestaItem = gValorRestaItem11;
-                        gCamItem11.gValorItem = gValorItem11;
-                        gCamItem11.gCamIVA = gCamIVA11;
-                        gCamItem1[f] = gCamItem11;
-                    }
-                    if (f == 11)
-                    {
-                        gCamItem12.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem12.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem12.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem12.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem12.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem12.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem12.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem12.dDescItem = 0;
-                            gValorRestaItem12.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem12.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem12.dDescItem = 0;
-                            gValorRestaItem12.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem12.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem12.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem12.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem12.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA12.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA12.dPropIVA = 100;
-                                    gCamIVA12.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA12.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA12.dPropIVA = 100;
-                                    gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA12.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA12.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA12.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA12.dPropIVA = 100;
-                                    gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA12.iAfecIVA = "3";
-                            gCamIVA12.dBasGravIVA = 0;
-                            gCamIVA12.dLiqIVAItem = 0;
-                        }
-                        gCamIVA12.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem12.gValorRestaItem = gValorRestaItem12;
-                        gCamItem12.gValorItem = gValorItem12;
-                        gCamItem12.gCamIVA = gCamIVA12;
-                        gCamItem1[f] = gCamItem12;
-                    }
-                    if (f == 12)
-                    {
-                        gCamItem13.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem13.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem13.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem13.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem13.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem13.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem13.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem13.dDescItem = 0;
-                            gValorRestaItem13.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem13.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem13.dDescItem = 0;
-                            gValorRestaItem13.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem13.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem13.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem13.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem13.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA13.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA13.dPropIVA = 100;
-                                    gCamIVA13.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA13.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA13.dPropIVA = 100;
-                                    gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA13.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA13.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA13.dLiqIVAItem = c_iva5; Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA13.dPropIVA = 100;
-                                    gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA13.iAfecIVA = "3";
-                            gCamIVA13.dBasGravIVA = 0;
-                            gCamIVA13.dLiqIVAItem = 0;
-                        }
-                        gCamIVA13.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem13.gValorRestaItem = gValorRestaItem13;
-                        gCamItem13.gValorItem = gValorItem13;
-                        gCamItem13.gCamIVA = gCamIVA13;
-                        gCamItem1[f] = gCamItem13;
-                    }
-                    if (f == 13)
-                    {
-                        gCamItem14.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem14.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem14.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem14.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem14.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem14.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem14.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem14.dDescItem = 0;
-                            gValorRestaItem14.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem14.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem14.dDescItem = 0;
-                            gValorRestaItem14.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem14.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem14.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem14.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem14.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA14.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA14.dPropIVA = 100;
-                                    gCamIVA14.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA14.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA14.dPropIVA = 100;
-                                    gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA14.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA14.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA14.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA14.dPropIVA = 100;
-                                    gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA14.iAfecIVA = "3";
-                            gCamIVA14.dBasGravIVA = 0;
-                            gCamIVA14.dLiqIVAItem = 0;
-                        }
-                        gCamIVA14.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem14.gValorRestaItem = gValorRestaItem14;
-                        gCamItem14.gValorItem = gValorItem14;
-                        gCamItem14.gCamIVA = gCamIVA14;
-                        gCamItem1[f] = gCamItem14;
-                    }
-                    if (f == 14)
-                    {
-                        gCamItem15.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem15.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem15.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem15.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem15.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem15.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem15.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem15.dDescItem = 0;
-                            gValorRestaItem15.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem15.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem15.dDescItem = 0;
-                            gValorRestaItem15.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem15.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem15.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem15.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem15.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA15.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA15.dPropIVA = 100;
-                                    gCamIVA15.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA15.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA15.dPropIVA = 100;
-                                    gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA15.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA15.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA15.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA15.dPropIVA = 100;
-                                    gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA15.iAfecIVA = "3";
-                            gCamIVA15.dBasGravIVA = 0;
-                            gCamIVA15.dLiqIVAItem = 0;
-                        }
-                        gCamIVA15.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem15.gValorRestaItem = gValorRestaItem15;
-                        gCamItem15.gValorItem = gValorItem15;
-                        gCamItem15.gCamIVA = gCamIVA15;
-                        gCamItem1[f] = gCamItem15;
-                    }
-                    if (f == 15)
-                    {
-                        gCamItem16.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem16.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem16.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem16.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem16.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem16.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem16.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem16.dDescItem = 0;
-                            gValorRestaItem16.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem16.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem16.dDescItem = 0;
-                            gValorRestaItem16.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem16.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem16.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem16.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem16.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA16.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA16.dPropIVA = 100;
-                                    gCamIVA16.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA16.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA16.dPropIVA = 100;
-                                    gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA16.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA16.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA16.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA16.dPropIVA = 100;
-                                    gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA16.iAfecIVA = "3";
-                            gCamIVA16.dBasGravIVA = 0;
-                            gCamIVA16.dLiqIVAItem = 0;
-                        }
-                        gCamIVA16.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem16.gValorRestaItem = gValorRestaItem16;
-                        gCamItem16.gValorItem = gValorItem16;
-                        gCamItem16.gCamIVA = gCamIVA16;
-                        gCamItem1[f] = gCamItem16;
-                    }
-                    if (f == 16)
-                    {
-                        gCamItem17.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem17.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem17.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem17.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem17.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem17.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem17.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem17.dDescItem = 0;
-                            gValorRestaItem17.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem17.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem17.dDescItem = 0;
-                            gValorRestaItem17.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem17.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem17.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem17.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem17.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA17.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA17.dPropIVA = 100;
-                                    gCamIVA17.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA17.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA17.dPropIVA = 100;
-                                    gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA17.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA17.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA17.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA17.dPropIVA = 100;
-                                    gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA17.iAfecIVA = "3";
-                            gCamIVA17.dBasGravIVA = 0;
-                            gCamIVA17.dLiqIVAItem = 0;
-                        }
-                        gCamIVA17.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem17.gValorRestaItem = gValorRestaItem17;
-                        gCamItem17.gValorItem = gValorItem17;
-                        gCamItem17.gCamIVA = gCamIVA17;
-                        gCamItem1[f] = gCamItem17;
-                    }
-                    if (f == 17)
-                    {
-                        gCamItem18.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem18.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem18.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem18.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem18.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem18.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem18.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem18.dDescItem = 0;
-                            gValorRestaItem18.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem18.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem18.dDescItem = 0;
-                            gValorRestaItem18.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem18.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem18.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem18.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem18.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA18.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA18.dPropIVA = 100;
-                                    gCamIVA18.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA18.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA18.dPropIVA = 100;
-                                    gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA18.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA18.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA18.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA18.dPropIVA = 100;
-                                    gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA18.iAfecIVA = "3";
-                            gCamIVA18.dBasGravIVA = 0;
-                            gCamIVA18.dLiqIVAItem = 0;
-                        }
-                        gCamIVA18.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem18.gValorRestaItem = gValorRestaItem18;
-                        gCamItem18.gValorItem = gValorItem18;
-                        gCamItem18.gCamIVA = gCamIVA18;
-                        gCamItem1[f] = gCamItem18;
-                    }
-                    if (f == 18)
-                    {
-                        gCamItem19.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem19.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem19.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem19.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());                                                                                 //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem19.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem19.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem19.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem19.dDescItem = 0;
-                            gValorRestaItem19.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem19.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem19.dDescItem = 0;
-                            gValorRestaItem19.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem19.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem19.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem19.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem19.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA19.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA19.dPropIVA = 100;
-                                    gCamIVA19.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA19.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA19.dPropIVA = 100;
-                                    gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA19.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA19.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA19.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA19.dPropIVA = 100;
-                                    gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA19.iAfecIVA = "3";
-                            gCamIVA19.dBasGravIVA = 0;
-                            gCamIVA19.dLiqIVAItem = 0;
-                        }
-                        gCamIVA19.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem19.gValorRestaItem = gValorRestaItem19;
-                        gCamItem19.gValorItem = gValorItem19;
-                        gCamItem19.gCamIVA = gCamIVA19;
-                        gCamItem1[f] = gCamItem19;
-                    }
-                    if (f == 19)
-                    {
-                        gCamItem20.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem20.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem20.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        gValorItem20.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
-                        //Si es licitacion
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem20.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem20.dDncpG = dncpNum.ToString("D8");
-                        }
-                        if (v_monedaDoc.Equals("PYG"))
-                        {
-                            gValorItem20.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                            gValorRestaItem20.dDescItem = 0;
-                            gValorRestaItem20.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
-                        }
-                        else
-                        {
-                            gValorItem20.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                            gValorRestaItem20.dDescItem = 0;
-                            gValorRestaItem20.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        }
-                        ////gValorItem
-                        //gValorItem20.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        //gValorItem20.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        ////gValorRestaItem
-                        //gValorRestaItem20.dDescItem = 0;
-                        ////gValorRestaItem.dAntPreUniIt = 0;
-                        ////gValorRestaItem.dTotOpeItem = 0;  
-                        //gValorRestaItem20.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA20.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA20.dPropIVA = 100;
-                                    gCamIVA20.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA20.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA20.dPropIVA = 100;
-                                    gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
-                                    gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA20.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA20.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA20.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA20.dPropIVA = 100;
-                                    gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
-                                    gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA20.iAfecIVA = "3";
-                            gCamIVA20.dBasGravIVA = 0;
-                            gCamIVA20.dLiqIVAItem = 0;
-                        }
-                        gCamIVA20.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem20.gValorRestaItem = gValorRestaItem20;
-                        gCamItem20.gValorItem = gValorItem20;
-                        gCamItem20.gCamIVA = gCamIVA20;
-                        gCamItem1[f] = gCamItem20;
-                    }
-                    if (f == 20)
-                    {
-                        gCamItem21.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem21.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem21.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem21.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem21.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem21.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem21.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA21.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA21.dPropIVA = 100;
-                                    gCamIVA21.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA21.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA21.dPropIVA = 100;
-                                    gCamIVA21.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA21.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA21.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA21.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA21.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA21.dPropIVA = 100;
-                                    gCamIVA21.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA21.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA21.iAfecIVA = "3";
-                            gCamIVA21.dBasGravIVA = 0;
-                            gCamIVA21.dLiqIVAItem = 0;
-                        }
-                        gCamIVA21.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem21.gValorRestaItem = gValorRestaItem21;
-                        gCamItem21.gValorItem = gValorItem21;
-                        gCamItem21.gCamIVA = gCamIVA21;
-                        gCamItem1[f] = gCamItem21;
-                    }
-                    if (f == 21)
-                    {
-                        gCamItem22.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem22.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem22.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem22.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem22.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem22.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem22.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA22.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA22.dPropIVA = 100;
-                                    gCamIVA22.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA22.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA22.dPropIVA = 100;
-                                    gCamIVA22.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA22.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA22.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA22.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA22.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA22.dPropIVA = 100;
-                                    gCamIVA22.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA22.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA22.iAfecIVA = "3";
-                            gCamIVA22.dBasGravIVA = 0;
-                            gCamIVA22.dLiqIVAItem = 0;
-                        }
-                        gCamIVA22.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem22.gValorRestaItem = gValorRestaItem22;
-                        gCamItem22.gValorItem = gValorItem22;
-                        gCamItem22.gCamIVA = gCamIVA22;
-                        gCamItem1[f] = gCamItem22;
-                    }
-                    if (f == 22)
-                    {
-                        gCamItem23.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem23.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem23.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem23.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem23.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem23.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem23.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA23.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA23.dPropIVA = 100;
-                                    gCamIVA23.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA23.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA23.dPropIVA = 100;
-                                    gCamIVA23.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA23.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA23.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA23.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA23.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA23.dPropIVA = 100;
-                                    gCamIVA23.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA23.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA23.iAfecIVA = "3";
-                            gCamIVA23.dBasGravIVA = 0;
-                            gCamIVA23.dLiqIVAItem = 0;
-                        }
-                        gCamIVA23.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem23.gValorRestaItem = gValorRestaItem23;
-                        gCamItem23.gValorItem = gValorItem23;
-                        gCamItem23.gCamIVA = gCamIVA23;
-                        gCamItem1[f] = gCamItem23;
-                    }
-                    if (f == 23)
-                    {
-                        gCamItem24.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem24.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem24.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem24.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem24.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem24.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem24.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA24.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA24.dPropIVA = 100;
-                                    gCamIVA24.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA24.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA24.dPropIVA = 100;
-                                    gCamIVA24.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA24.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA24.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA24.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA24.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA24.dPropIVA = 100;
-                                    gCamIVA24.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA24.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA24.iAfecIVA = "3";
-                            gCamIVA24.dBasGravIVA = 0;
-                            gCamIVA24.dLiqIVAItem = 0;
-                        }
-                        gCamIVA24.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem24.gValorRestaItem = gValorRestaItem24;
-                        gCamItem24.gValorItem = gValorItem24;
-                        gCamItem24.gCamIVA = gCamIVA24;
-                        gCamItem1[f] = gCamItem24;
-                    }
-                    if (f == 24)
-                    {
-                        gCamItem25.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem25.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem25.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem25.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem25.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem25.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem25.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA25.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA25.dPropIVA = 100;
-                                    gCamIVA25.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA25.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA25.dPropIVA = 100;
-                                    gCamIVA25.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA25.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA25.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA25.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA25.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA25.dPropIVA = 100;
-                                    gCamIVA25.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA25.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA25.iAfecIVA = "3";
-                            gCamIVA25.dBasGravIVA = 0;
-                            gCamIVA25.dLiqIVAItem = 0;
-                        }
-                        gCamIVA25.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem25.gValorRestaItem = gValorRestaItem25;
-                        gCamItem25.gValorItem = gValorItem25;
-                        gCamItem25.gCamIVA = gCamIVA25;
-                        gCamItem1[f] = gCamItem25;
-                    }
-                    if (f == 25)
-                    {
-                        gCamItem26.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem26.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem26.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem26.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem26.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem26.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem26.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA26.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA26.dPropIVA = 100;
-                                    gCamIVA26.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA26.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA26.dPropIVA = 100;
-                                    gCamIVA26.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA26.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA26.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA26.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA26.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA26.dPropIVA = 100;
-                                    gCamIVA26.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA26.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA26.iAfecIVA = "3";
-                            gCamIVA26.dBasGravIVA = 0;
-                            gCamIVA26.dLiqIVAItem = 0;
-                        }
-                        gCamIVA26.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem26.gValorRestaItem = gValorRestaItem26;
-                        gCamItem26.gValorItem = gValorItem26;
-                        gCamItem26.gCamIVA = gCamIVA26;
-                        gCamItem1[f] = gCamItem26;
-                    }
-                    if (f == 26)
-                    {
-                        gCamItem27.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem27.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem27.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem27.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem27.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem27.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem27.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA27.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA27.dPropIVA = 100;
-                                    gCamIVA27.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA27.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA27.dPropIVA = 100;
-                                    gCamIVA27.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA27.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA27.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA27.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA27.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA27.dPropIVA = 100;
-                                    gCamIVA27.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA27.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA27.iAfecIVA = "3";
-                            gCamIVA27.dBasGravIVA = 0;
-                            gCamIVA27.dLiqIVAItem = 0;
-                        }
-                        gCamIVA27.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem27.gValorRestaItem = gValorRestaItem27;
-                        gCamItem27.gValorItem = gValorItem27;
-                        gCamItem27.gCamIVA = gCamIVA27;
-                        gCamItem1[f] = gCamItem27;
-                    }
-                    if (f == 27)
-                    {
-                        gCamItem28.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem28.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem28.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem28.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem28.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem28.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem28.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA28.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA28.dPropIVA = 100;
-                                    gCamIVA28.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA28.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA28.dPropIVA = 100;
-                                    gCamIVA28.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA28.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA28.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA28.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA28.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA28.dPropIVA = 100;
-                                    gCamIVA28.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA28.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA28.iAfecIVA = "3";
-                            gCamIVA28.dBasGravIVA = 0;
-                            gCamIVA28.dLiqIVAItem = 0;
-                        }
-                        gCamIVA28.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem28.gValorRestaItem = gValorRestaItem28;
-                        gCamItem28.gValorItem = gValorItem28;
-                        gCamItem28.gCamIVA = gCamIVA28;
-                        gCamItem1[f] = gCamItem28;
-                    }
-                    if (f == 28)
-                    {
-                        gCamItem29.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem29.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem29.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem29.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem29.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem29.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem29.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA29.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA29.dPropIVA = 100;
-                                    gCamIVA29.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA29.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA29.dPropIVA = 100;
-                                    gCamIVA29.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA29.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA29.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA29.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA29.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA29.dPropIVA = 100;
-                                    gCamIVA29.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA29.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA29.iAfecIVA = "3";
-                            gCamIVA29.dBasGravIVA = 0;
-                            gCamIVA29.dLiqIVAItem = 0;
-                        }
-                        gCamIVA29.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem29.gValorRestaItem = gValorRestaItem29;
-                        gCamItem29.gValorItem = gValorItem29;
-                        gCamItem29.gCamIVA = gCamIVA29;
-                        gCamItem1[f] = gCamItem29;
-                    }
-                    if (f == 29)
-                    {
-                        gCamItem30.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem30.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem30.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem30.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem30.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem30.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem30.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA30.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA30.dPropIVA = 100;
-                                    gCamIVA30.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA30.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA30.dPropIVA = 100;
-                                    gCamIVA30.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA30.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA30.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA30.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA30.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA30.dPropIVA = 100;
-                                    gCamIVA30.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA30.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA30.iAfecIVA = "3";
-                            gCamIVA30.dBasGravIVA = 0;
-                            gCamIVA30.dLiqIVAItem = 0;
-                        }
-                        gCamIVA30.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem30.gValorRestaItem = gValorRestaItem30;
-                        gCamItem30.gValorItem = gValorItem30;
-                        gCamItem30.gCamIVA = gCamIVA30;
-                        gCamItem1[f] = gCamItem30;
-                    }
-                    if (f == 30)
-                    {
-                        gCamItem31.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem31.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem31.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem31.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem31.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem31.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem31.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA31.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA31.dPropIVA = 100;
-                                    gCamIVA31.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA31.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA31.dPropIVA = 100;
-                                    gCamIVA31.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA31.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA31.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA31.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA31.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA31.dPropIVA = 100;
-                                    gCamIVA31.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA31.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA31.iAfecIVA = "3";
-                            gCamIVA31.dBasGravIVA = 0;
-                            gCamIVA31.dLiqIVAItem = 0;
-                        }
-                        gCamIVA31.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem31.gValorRestaItem = gValorRestaItem31;
-                        gCamItem31.gValorItem = gValorItem31;
-                        gCamItem31.gCamIVA = gCamIVA31;
-                        gCamItem1[f] = gCamItem31;
-                    }
-                    if (f == 31)
-                    {
-                        gCamItem32.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem32.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem32.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem32.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem32.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem32.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem32.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA32.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA32.dPropIVA = 100;
-                                    gCamIVA32.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA32.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA32.dPropIVA = 100;
-                                    gCamIVA32.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA32.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA32.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA32.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA32.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA32.dPropIVA = 100;
-                                    gCamIVA32.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA32.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA32.iAfecIVA = "3";
-                            gCamIVA32.dBasGravIVA = 0;
-                            gCamIVA32.dLiqIVAItem = 0;
-                        }
-                        gCamIVA32.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem32.gValorRestaItem = gValorRestaItem32;
-                        gCamItem32.gValorItem = gValorItem32;
-                        gCamItem32.gCamIVA = gCamIVA32;
-                        gCamItem1[f] = gCamItem32;
-                    }
-                    if (f == 32)
-                    {
-                        gCamItem33.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem33.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem33.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem33.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem33.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem33.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem33.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA33.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA33.dPropIVA = 100;
-                                    gCamIVA33.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA33.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA33.dPropIVA = 100;
-                                    gCamIVA33.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA33.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA33.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA33.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA33.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA33.dPropIVA = 100;
-                                    gCamIVA33.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA33.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA33.iAfecIVA = "3";
-                            gCamIVA33.dBasGravIVA = 0;
-                            gCamIVA33.dLiqIVAItem = 0;
-                        }
-                        gCamIVA33.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem33.gValorRestaItem = gValorRestaItem33;
-                        gCamItem33.gValorItem = gValorItem33;
-                        gCamItem33.gCamIVA = gCamIVA33;
-                        gCamItem1[f] = gCamItem33;
-                    }
-                    if (f == 33)
-                    {
-                        gCamItem34.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem34.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem34.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem34.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem34.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem34.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem34.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA34.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA34.dPropIVA = 100;
-                                    gCamIVA34.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA34.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA34.dPropIVA = 100;
-                                    gCamIVA34.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA34.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA34.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA34.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA34.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA34.dPropIVA = 100;
-                                    gCamIVA34.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA34.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA34.iAfecIVA = "3";
-                            gCamIVA34.dBasGravIVA = 0;
-                            gCamIVA34.dLiqIVAItem = 0;
-                        }
-                        gCamIVA34.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem34.gValorRestaItem = gValorRestaItem34;
-                        gCamItem34.gValorItem = gValorItem34;
-                        gCamItem34.gCamIVA = gCamIVA34;
-                        gCamItem1[f] = gCamItem34;
-                    }
-                    if (f == 34)
-                    {
-                        gCamItem35.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem35.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem35.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem35.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem35.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem35.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem35.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA35.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA35.dPropIVA = 100;
-                                    gCamIVA35.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA35.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA35.dPropIVA = 100;
-                                    gCamIVA35.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA35.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA35.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA35.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA35.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA35.dPropIVA = 100;
-                                    gCamIVA35.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA35.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA35.iAfecIVA = "3";
-                            gCamIVA35.dBasGravIVA = 0;
-                            gCamIVA35.dLiqIVAItem = 0;
-                        }
-                        gCamIVA35.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem35.gValorRestaItem = gValorRestaItem35;
-                        gCamItem35.gValorItem = gValorItem35;
-                        gCamItem35.gCamIVA = gCamIVA35;
-                        gCamItem1[f] = gCamItem35;
-                    }
-                    if (f == 35)
-                    {
-                        gCamItem36.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem36.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem36.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem36.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem36.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem36.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem36.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA36.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA36.dPropIVA = 100;
-                                    gCamIVA36.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA36.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA36.dPropIVA = 100;
-                                    gCamIVA36.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA36.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA36.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA36.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA36.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA36.dPropIVA = 100;
-                                    gCamIVA36.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA36.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA36.iAfecIVA = "3";
-                            gCamIVA36.dBasGravIVA = 0;
-                            gCamIVA36.dLiqIVAItem = 0;
-                        }
-                        gCamIVA36.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem36.gValorRestaItem = gValorRestaItem36;
-                        gCamItem36.gValorItem = gValorItem36;
-                        gCamItem36.gCamIVA = gCamIVA36;
-                        gCamItem1[f] = gCamItem36;
-                    }
-                    if (f == 36)
-                    {
-                        gCamItem37.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem37.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem37.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem37.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem37.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem37.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem37.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA37.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA37.dPropIVA = 100;
-                                    gCamIVA37.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA37.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA37.dPropIVA = 100;
-                                    gCamIVA37.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA37.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA37.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA37.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA37.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA37.dPropIVA = 100;
-                                    gCamIVA37.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA37.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA37.iAfecIVA = "3";
-                            gCamIVA37.dBasGravIVA = 0;
-                            gCamIVA37.dLiqIVAItem = 0;
-                        }
-                        gCamIVA37.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem37.gValorRestaItem = gValorRestaItem37;
-                        gCamItem37.gValorItem = gValorItem37;
-                        gCamItem37.gCamIVA = gCamIVA37;
-                        gCamItem1[f] = gCamItem37;
-                    }
-                    if (f == 37)
-                    {
-                        gCamItem38.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem38.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem38.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem38.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem38.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem38.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem38.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA38.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA38.dPropIVA = 100;
-                                    gCamIVA38.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA38.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA38.dPropIVA = 100;
-                                    gCamIVA38.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA38.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA38.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA38.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA38.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA38.dPropIVA = 100;
-                                    gCamIVA38.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA38.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA38.iAfecIVA = "3";
-                            gCamIVA38.dBasGravIVA = 0;
-                            gCamIVA38.dLiqIVAItem = 0;
-                        }
-                        gCamIVA38.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem38.gValorRestaItem = gValorRestaItem38;
-                        gCamItem38.gValorItem = gValorItem38;
-                        gCamItem38.gCamIVA = gCamIVA38;
-                        gCamItem1[f] = gCamItem38;
-                    }
-                    if (f == 38)
-                    {
-                        gCamItem39.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem39.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem39.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem39.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem39.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem39.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem39.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA39.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA39.dPropIVA = 100;
-                                    gCamIVA39.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA39.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA39.dPropIVA = 100;
-                                    gCamIVA39.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA39.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA39.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA39.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA39.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA39.dPropIVA = 100;
-                                    gCamIVA39.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA39.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA39.iAfecIVA = "3";
-                            gCamIVA39.dBasGravIVA = 0;
-                            gCamIVA39.dLiqIVAItem = 0;
-                        }
-                        gCamIVA36.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem39.gValorRestaItem = gValorRestaItem39;
-                        gCamItem39.gValorItem = gValorItem39;
-                        gCamItem39.gCamIVA = gCamIVA39;
-                        gCamItem1[f] = gCamItem39;
-                    }
-                    if (f == 39)
-                    {
-                        gCamItem40.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem40.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem40.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem40.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem40.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem40.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem40.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA40.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA40.dPropIVA = 100;
-                                    gCamIVA40.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA40.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA40.dPropIVA = 100;
-                                    gCamIVA40.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA40.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA40.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA40.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA40.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA40.dPropIVA = 100;
-                                    gCamIVA40.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA40.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA40.iAfecIVA = "3";
-                            gCamIVA40.dBasGravIVA = 0;
-                            gCamIVA40.dLiqIVAItem = 0;
-                        }
-                        gCamIVA40.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem40.gValorRestaItem = gValorRestaItem40;
-                        gCamItem40.gValorItem = gValorItem40;
-                        gCamItem40.gCamIVA = gCamIVA40;
-                        gCamItem1[f] = gCamItem40;
-                    }
-                    if (f == 40)
-                    {
-                        gCamItem41.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem41.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem41.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem41.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem41.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem41.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem41.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA41.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA41.dPropIVA = 100;
-                                    gCamIVA41.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA41.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA41.dPropIVA = 100;
-                                    gCamIVA41.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA41.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA41.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA41.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA41.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA41.dPropIVA = 100;
-                                    gCamIVA41.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA41.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA41.iAfecIVA = "3";
-                            gCamIVA41.dBasGravIVA = 0;
-                            gCamIVA41.dLiqIVAItem = 0;
-                        }
-                        gCamIVA41.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem41.gValorRestaItem = gValorRestaItem41;
-                        gCamItem41.gValorItem = gValorItem41;
-                        gCamItem41.gCamIVA = gCamIVA41;
-                        gCamItem1[f] = gCamItem41;
-                    }
-                    if (f == 41)
-                    {
-                        gCamItem42.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem42.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem42.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem42.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem42.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem42.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem42.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA42.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA42.dPropIVA = 100;
-                                    gCamIVA42.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA42.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA42.dPropIVA = 100;
-                                    gCamIVA42.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA42.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA42.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA42.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA42.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA42.dPropIVA = 100;
-                                    gCamIVA42.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA42.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA42.iAfecIVA = "3";
-                            gCamIVA42.dBasGravIVA = 0;
-                            gCamIVA42.dLiqIVAItem = 0;
-                        }
-                        gCamIVA42.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem42.gValorRestaItem = gValorRestaItem42;
-                        gCamItem42.gValorItem = gValorItem42;
-                        gCamItem42.gCamIVA = gCamIVA42;
-                        gCamItem1[f] = gCamItem42;
-                    }
-                    if (f == 42)
-                    {
-                        gCamItem43.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem43.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem43.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem43.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem43.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem43.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem43.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA43.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA43.dPropIVA = 100;
-                                    gCamIVA43.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA43.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA43.dPropIVA = 100;
-                                    gCamIVA43.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA43.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA43.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA43.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA43.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA43.dPropIVA = 100;
-                                    gCamIVA43.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA43.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA43.iAfecIVA = "3";
-                            gCamIVA43.dBasGravIVA = 0;
-                            gCamIVA43.dLiqIVAItem = 0;
-                        }
-                        gCamIVA43.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem43.gValorRestaItem = gValorRestaItem43;
-                        gCamItem43.gValorItem = gValorItem43;
-                        gCamItem43.gCamIVA = gCamIVA43;
-                        gCamItem1[f] = gCamItem43;
-                    }
-                    if (f == 43)
-                    {
-                        gCamItem44.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem44.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem44.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem44.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem44.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem44.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem44.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA44.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA44.dPropIVA = 100;
-                                    gCamIVA44.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA44.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA44.dPropIVA = 100;
-                                    gCamIVA44.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA44.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA44.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA44.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA44.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA44.dPropIVA = 100;
-                                    gCamIVA44.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA44.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA44.iAfecIVA = "3";
-                            gCamIVA44.dBasGravIVA = 0;
-                            gCamIVA44.dLiqIVAItem = 0;
-                        }
-                        gCamIVA44.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem44.gValorRestaItem = gValorRestaItem44;
-                        gCamItem44.gValorItem = gValorItem44;
-                        gCamItem44.gCamIVA = gCamIVA44;
-                        gCamItem1[f] = gCamItem44;
-                    }
-                    if (f == 44)
-                    {
-                        gCamItem45.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem45.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem45.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                                                                                                         //gValorItem
-                        gValorItem45.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
-                        gValorItem45.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gValorRestaItem
-                        gValorRestaItem45.dDescItem = 0;
-                        //gValorRestaItem.dAntPreUniIt = 0;
-                        //gValorRestaItem.dTotOpeItem = 0;  
-                        gValorRestaItem45.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        //gCamIVA
-                        string IVA = oDatos.Fields.Item(15).Value.ToString();
-                        if (IVA.Equals("5") || IVA.Equals("10"))
-                        {
-                            gCamIVA45.iAfecIVA = "1";
-                            if (IVA.Equals("10"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA45.dPropIVA = 100;
-                                    gCamIVA45.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                    gCamIVA45.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
-                                }
-                                else
-                                {
-                                    gCamIVA45.dPropIVA = 100;
-                                    gCamIVA45.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
-                                    gCamIVA45.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
-                                }
-
-                            }
-                            if (IVA.Equals("5"))
-                            {
-                                if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
-                                {
-                                    gCamIVA45.dPropIVA = 100;
-                                    decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                                    gCamIVA45.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
-                                    gCamIVA45.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
-                                }
-                                else
-                                {
-                                    gCamIVA45.dPropIVA = 100;
-                                    gCamIVA45.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
-                                    gCamIVA45.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
-                                }
-
-                            }
-
-                        }
-                        else if (IVA.Equals("0"))
-                        {
-                            gCamIVA45.iAfecIVA = "3";
-                            gCamIVA45.dBasGravIVA = 0;
-                            gCamIVA45.dLiqIVAItem = 0;
-                        }
-                        gCamIVA45.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
-
-                        gValorItem45.gValorRestaItem = gValorRestaItem45;
-                        gCamItem45.gValorItem = gValorItem45;
-                        gCamItem45.gCamIVA = gCamIVA45;
-                        gCamItem1[f] = gCamItem45;
-                    }
-                    #endregion
-
-
-                    f++;
-                    oDatos.MoveNext();
                     if (false == oCompany.InTransaction)
                     {
                         oCompany.StartTransaction();
                     }
-                }
-                //conexion
-                if (false == oCompany.InTransaction)
-                {
-                    oCompany.StartTransaction();
-                }
-                //los parámetro de procesamientos
-                parametros.retornarKuDE = true;
-                parametros.retornarXmlFirmado = true;
-                if (tablacab.Equals("OINV"))
-                {
-                    if (string.IsNullOrEmpty(trans))
+                    //buscamos el establecimeinto y punto de exp correspondiente
+                    SAPbobsCOM.Recordset oSeriesDatos;
+                    oSeriesDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oSeriesDatos.DoQuery("SELECT T1.\"BeginStr\",T1.\"EndStr\" FROM " + tablacab + " T0 INNER JOIN NNM1 T1 ON T0.\"Series\"=T1.\"Series\" WHERE T0.\"DocNum\"='" + codigo + "'");
+                    //procedemos a actualizar el documento
+                    SAPbobsCOM.Recordset oDocAct;
+                    oDocAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oDocAct.DoQuery("UPDATE " + tablacab + " SET \"U_PEMI\"='" + oSeriesDatos.Fields.Item(1).Value.ToString() + "',\"U_ESTA\"='" + oSeriesDatos.Fields.Item(0).Value.ToString() + "' WHERE \"DocNum\"='" + codigo + "' ");
+
+                    Recordset oDire;
+                    oDire = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oDire.DoQuery("select \"PayToCode\",\"ShipToCode\" from " + tablacab + " where \"DocNum\"='" + codigo + "'");
+                    string direPay = oDire.Fields.Item(0).Value.ToString();
+                    string direShip = oDire.Fields.Item(1).Value.ToString();
+                    //proceso para mandar documento
+                    //consultamos los datos del documento
+                    Recordset oDatos;
+                    oDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    //consultamos cual direccion se eligio              
+
+                    #region QUERY DOCUMENTO
+                    //if (!string.IsNullOrEmpty(direPay))
+                    //{
+
+                    //    //GRANUSA
+                    //    oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
+                    //                   "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
+                    //                   "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
+                    //                   "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                    //                   "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                    //                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
+                    //                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
+                    //                   "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
+                    //                   "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END ,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
+                    //                   "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
+                    //                   "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
+                    //                   "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\"  " +
+                    //                   "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
+                    //                   "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
+                    //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
+                    //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
+                    //                   "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
+                    //                   "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
+                    //                   "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
+                    //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
+                    //                   "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
+                    //                   "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
+                    //                   "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
+                    //                   //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
+                    //                   "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
+                    //                   "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
+                    //                   "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
+                    //                   "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
+                    //                   "WHERE T0.\"DocNum\"='" + codigo + "'");
+                    //    // }
+                    //}
+                    if (!string.IsNullOrEmpty(direPay))
                     {
-                        parametros.templateKuDE = "FACTURA_SIMPLE";
+
+                        //GRANUSA
+                        oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
+                                       "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",\"PriceAfVAT\"," +
+                                       "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
+                                       "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
+                                       "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                                       "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
+                                       "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
+                                       "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\",T0.\"DocTotal\",T0.\"U_docElectronico\", " +
+                                       "T0.\"U_TRANSPORTISTA\",T12.\"U_Nombre\"||','||T12.\"U_Apellido\",CASE WHEN T11.\"U_CHAPA_CARRE\" IS NULL THEN  T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T12.\"U_Documento\",T12.\"U_Direccion\",T13.\"U_SET_FE\", " +
+                                       "T14.\"LicTradNum\",T14.\"CardName\",T14.\"U_iNatRec\",T15.\"Country\",T15.\"Street\",T16.\"U_SET_FE\",T16.\"U_DESC_SET_FE\",T0.\"NumAtCard\", " +
+                                       "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
+                                       "T13.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T1.\"DiscPrcnt\",T1.\"Price\",T1.\"PriceBefDi\",T1.\"PriceBefDi\"-T1.\"Price\",T2.\"E_Mail\"  " +
+                                       "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
+                                       "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"PayToCode\" " +
+                                       "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
+                                       "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
+                                       "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
+                                       "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
+                                       "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
+                                       "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
+                                       "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
+                                       "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
+                                       "LEFT JOIN \"@CHOFERES\" T12 ON T12.\"Code\"=T0.\"U_CHOFERES\" " +
+                                       //"LEFT JOIN OCPR T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" AND T12.\"Name\"=T0.\"U_CHOFERES\" " +
+                                       "LEFT JOIN  \"@EQUIVALENCIAS_FE\" T13 ON T13.\"U_SAP\"=T0.\"U_ESTA\" " +
+                                       "LEFT JOIN OCRD T14 ON T14.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
+                                       "LEFT JOIN CRD1 T15 ON T15.\"CardCode\"=T14.\"CardCode\" AND T15.\"AdresType\"='B' " +
+                                       "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T15.\"Country\" " +
+                                       "WHERE T0.\"DocNum\"='" + codigo + "'");
+                        // }
+                    }
+                    #endregion
+
+                    string Entry = oDatos.Fields.Item(0).Value.ToString();
+                    string electronico = oDatos.Fields.Item(30).Value.ToString();
+                    string trans = oDatos.Fields.Item(31).Value.ToString();
+                    string NumSerie = oDatos.Fields.Item(17).Value.ToString();
+                    string DocNum = oDatos.Fields.Item(45).Value.ToString();
+                    //receptor
+                    string rec_dep = oDatos.Fields.Item(46).Value.ToString();
+                    string rec_dist = oDatos.Fields.Item(47).Value.ToString();
+                    string rec_loc = oDatos.Fields.Item(48).Value.ToString();
+                    //salida
+                    string valorSalida = oDatos.Fields.Item(49).Value.ToString();
+                    string sal_dep = null;
+                    string sal_dist = null;
+                    string sal_loc = null;
+                    //responsable del flete
+                    string RespFlete = oDatos.Fields.Item(50).Value.ToString();
+                    string CodLicitacion = oDatos.Fields.Item(51).Value.ToString();
+                    string transId = oDatos.Fields.Item(52).Value.ToString();
+                    string infoadicional = oDatos.Fields.Item(53).Value.ToString();
+
+                    string direccionRec = oDatos.Fields.Item(5).Value.ToString();
+                    string correo = oDatos.Fields.Item(58).Value.ToString();
+
+                    string valorG = valorSalida;
+                    string[] guion = valorG.Split('-');
+                    int g = 0;
+                    foreach (string valor2 in guion)
+                    {
+                        if (g == 0)
+                        {
+                            sal_dep = valor2;
+                        }
+                        if (g == 1)
+                        {
+                            sal_dist = valor2;
+                        }
+                        if (g == 2)
+                        {
+                            sal_loc = valor2;
+                        }
+                        g++;
+                    }
+                    //consulta para saber cuantas lineas posee el documento par poder instanciar el objeto de acuerdo a la cantidad de fila
+                    Recordset oLineas;
+                    oLineas = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oLineas.DoQuery("select COUNT(*) from " + tabladet + " where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
+                    int i = int.Parse(oLineas.Fields.Item(0).Value.ToString());
+                    //consultamos a traves de la serie, el folio, establecimiento y punto de expedición
+                    Recordset oSerie;
+                    oSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oSerie.DoQuery("SELECT \"BeginStr\",\"EndStr\",CASE WHEN \"NextFolio\" IS NULL THEN 0+1 ELSE \"NextFolio\"+1 END,\"Remark\" FROM NNM1 WHERE \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
+                    string esta = oSerie.Fields.Item(0).Value.ToString();
+                    string pun = oSerie.Fields.Item(1).Value.ToString();
+                    int folio = int.Parse(oSerie.Fields.Item(2).Value.ToString());
+                    string timbrado = oSerie.Fields.Item(3).Value.ToString();
+                    //actualizamos el folio de la factura
+                    Recordset oActUDF;
+                    oActUDF = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oActUDF.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"U_TIMB\"='" + timbrado + "' where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
+                    // //actualizamos la numeracion de la serie           
+                    // Recordset oActSerie;
+                    // oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    // oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());         
+                    //deconstruimos el RUC del emisor
+                    string varE = oDatos.Fields.Item(18).Value.ToString();
+                    int indexE = varE.IndexOf("-");
+                    int canE = oDatos.Fields.Item(18).Value.ToString().Length;
+                    string rucE = oDatos.Fields.Item(18).Value.ToString().Remove(indexE, canE - indexE);
+                    string dvE = oDatos.Fields.Item(18).Value.ToString().Remove(0, indexE + 1);
+                    //deconstruimos el RUC del cliente
+                    string var = null;
+                    int index = 0;
+                    int can = 0;
+                    string ruc = null;
+                    string dv = null;
+                    if (oDatos.Fields.Item(26).Value.ToString() == "1")
+                    {
+                        var = oDatos.Fields.Item(4).Value.ToString();
+                        index = var.IndexOf("-");
+                        can = oDatos.Fields.Item(4).Value.ToString().Length;
+                        ruc = oDatos.Fields.Item(4).Value.ToString().Remove(index, can - index);
+                        dv = oDatos.Fields.Item(4).Value.ToString().Remove(0, index + 1);
+                        //instaciamos los objetos que vutilizaremos
+                    }
+
+                    #region INSTANCIAR OBJETOS
+                    servicio.FacturacionElectronicaClient cliente = new servicio.FacturacionElectronicaClient();
+                    servicio.procesarLotePorFacturaRequest procesarFactura = new servicio.procesarLotePorFacturaRequest();
+                    servicio.procesarDocumento procesarDocumento = new servicio.procesarDocumento();
+                    servicio.procesarDocumento[] procesarDocumento2 = new servicio.procesarDocumento[1];
+                    servicio.rDE rDE = new servicio.rDE();
+                    servicio.DE DE = new servicio.DE();
+                    servicio.gOpeDE gOpeDE = new servicio.gOpeDE();
+                    servicio.gTimb gTimb = new servicio.gTimb();
+                    servicio.gDatGralOpe gDatGralOpe = new servicio.gDatGralOpe();
+                    servicio.gOpeCom gOpeCom = new servicio.gOpeCom();
+                    servicio.gEmis gEmis = new servicio.gEmis();
+                    servicio.gDatRec gDatRec = new servicio.gDatRec();
+                    servicio.gCamFE gCamFE = new servicio.gCamFE();
+                    servicio.gCamFEE gCamFEE = new servicio.gCamFEE();
+                    servicio.gCamFEI gCamFEI = new servicio.gCamFEI();
+                    servicio.gCamAE gCamAE = new servicio.gCamAE();
+                    servicio.gCamNCDE gCamNCDE = new servicio.gCamNCDE();
+                    servicio.gCamNRE gCamNRE = new servicio.gCamNRE();
+                    servicio.gDtipDE gDtipDE = new servicio.gDtipDE();
+                    servicio.gCamCond gCamCond = new servicio.gCamCond();
+                    servicio.gCamItem gCamItem = new servicio.gCamItem();
+                    servicio.gCamItem[] gCamItem1 = new servicio.gCamItem[2];
+                    servicio.gValorItem gValorItem = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA = new servicio.gCamIVA();
+                    servicio.gActEco gActEco = new servicio.gActEco();
+                    servicio.gActEco[] gActEco1 = new servicio.gActEco[1];
+                    servicio.gRespDE gResPDE = new servicio.gRespDE();
+                    servicio.gCompPub gCompPub = new servicio.gCompPub();
+                    servicio.gPaConEIni gPaConEIni = new servicio.gPaConEIni();
+                    servicio.gPaConEIni[] gPaConEIni1 = new servicio.gPaConEIni[1];
+                    servicio.gPagCheq gPagCheq = new servicio.gPagCheq();
+                    servicio.gPagTarCD gPagTarCD = new servicio.gPagTarCD();
+                    servicio.gPagCred gPagCred = new servicio.gPagCred();
+                    servicio.gCuotas gCuotas = new servicio.gCuotas();
+                    servicio.gCuotas[] gCuotas1 = new servicio.gCuotas[1];
+                    servicio.gVehNuevo gVehNuevo = new servicio.gVehNuevo();
+                    servicio.gRasMerc gRasMerc = new servicio.gRasMerc();
+                    servicio.gCamEsp gCamEsp = new servicio.gCamEsp();
+                    servicio.gGrupAdi gGrupAdi = new servicio.gGrupAdi();
+                    servicio.gGrupEner gGrupEner = new servicio.gGrupEner();
+                    servicio.gGrupSeg gGrupSeg = new servicio.gGrupSeg();
+                    servicio.gGrupPolSeg gGrupPolSeg = new servicio.gGrupPolSeg();
+                    servicio.gGrupPolSeg[] gGrupPolSeg1 = new servicio.gGrupPolSeg[1];
+                    servicio.gGrupSup gGrupSup = new servicio.gGrupSup();
+                    servicio.gTransp gTransp = new servicio.gTransp();
+                    servicio.gCamEnt gCamEnt = new servicio.gCamEnt();
+                    servicio.gCamEnt[] gCamEnt1 = new servicio.gCamEnt[1];
+                    servicio.gCamSal gCamSal = new servicio.gCamSal();
+                    servicio.gCamTrans gCamTrans = new servicio.gCamTrans();
+                    servicio.gVehTras gVehTras = new servicio.gVehTras();
+                    servicio.gVehTras[] gVehTras1 = new servicio.gVehTras[1];
+                    servicio.gTotSub gTotSub = new servicio.gTotSub();
+                    servicio.gCamGen gCamGen = new servicio.gCamGen();
+                    servicio.gCamCarg gCamCarg = new servicio.gCamCarg();
+                    servicio.gCamDEAsoc gCamDEAsoc = new servicio.gCamDEAsoc();
+                    servicio.gCamDEAsoc[] gCamDEAsoc1 = new servicio.gCamDEAsoc[1];
+                    servicio.gCamFuFD gCamFuFD = new servicio.gCamFuFD();
+                    servicio.docAsociado docAsociado = new servicio.docAsociado();
+                    servicio.docAsociado[] docAsociado1 = new servicio.docAsociado[1];
+                    servicio.parametrosProcesamiento parametros = new servicio.parametrosProcesamiento();
+                    servicio.resultadoProcesamiento[] resultadoProcesamiento = new servicio.resultadoProcesamiento[1];
+                    servicio.documentoElectronicoGenerado[] documentoElectronicoGenerado = new servicio.documentoElectronicoGenerado[1];
+                    //instanciamos varias lineas para el detalle
+                    #region LINEAS
+                    //linea 2
+                    servicio.gCamItem gCamItem2 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem2 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem2 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA2 = new servicio.gCamIVA();
+                    //linea 3
+                    servicio.gCamItem gCamItem3 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem3 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem3 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA3 = new servicio.gCamIVA();
+                    //linea 4
+                    servicio.gCamItem gCamItem4 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem4 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem4 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA4 = new servicio.gCamIVA();
+                    //linea 5
+                    servicio.gCamItem gCamItem5 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem5 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem5 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA5 = new servicio.gCamIVA();
+                    //linea 6
+                    servicio.gCamItem gCamItem6 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem6 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem6 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA6 = new servicio.gCamIVA();
+                    //linea 7
+                    servicio.gCamItem gCamItem7 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem7 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem7 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA7 = new servicio.gCamIVA();
+                    //linea 8
+                    servicio.gCamItem gCamItem8 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem8 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem8 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA8 = new servicio.gCamIVA();
+                    //linea 9
+                    servicio.gCamItem gCamItem9 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem9 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem9 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA9 = new servicio.gCamIVA();
+                    //linea 10
+                    servicio.gCamItem gCamItem10 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem10 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem10 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA10 = new servicio.gCamIVA();
+                    //linea11
+                    servicio.gCamItem gCamItem11 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem11 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem11 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA11 = new servicio.gCamIVA();
+                    //linea 12
+                    servicio.gCamItem gCamItem12 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem12 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem12 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA12 = new servicio.gCamIVA();
+                    //linea 13
+                    servicio.gCamItem gCamItem13 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem13 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem13 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA13 = new servicio.gCamIVA();
+                    //linea 14
+                    servicio.gCamItem gCamItem14 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem14 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem14 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA14 = new servicio.gCamIVA();
+                    //linea 15
+                    servicio.gCamItem gCamItem15 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem15 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem15 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA15 = new servicio.gCamIVA();
+                    //linea 16
+                    servicio.gCamItem gCamItem16 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem16 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem16 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA16 = new servicio.gCamIVA();
+                    //linea 17
+                    servicio.gCamItem gCamItem17 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem17 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem17 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA17 = new servicio.gCamIVA();
+                    //linea 18
+                    servicio.gCamItem gCamItem18 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem18 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem18 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA18 = new servicio.gCamIVA();
+                    //linea 19
+                    servicio.gCamItem gCamItem19 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem19 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem19 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA19 = new servicio.gCamIVA();
+                    //linea 20
+                    servicio.gCamItem gCamItem20 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem20 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem20 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA20 = new servicio.gCamIVA();
+                    //linea 21
+                    servicio.gCamItem gCamItem21 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem21 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem21 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA21 = new servicio.gCamIVA();
+                    //linea 22
+                    servicio.gCamItem gCamItem22 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem22 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem22 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA22 = new servicio.gCamIVA();
+                    //linea 23
+                    servicio.gCamItem gCamItem23 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem23 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem23 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA23 = new servicio.gCamIVA();
+                    //linea 24
+                    servicio.gCamItem gCamItem24 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem24 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem24 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA24 = new servicio.gCamIVA();
+                    //linea 25
+                    servicio.gCamItem gCamItem25 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem25 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem25 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA25 = new servicio.gCamIVA();
+                    //linea 26
+                    servicio.gCamItem gCamItem26 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem26 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem26 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA26 = new servicio.gCamIVA();
+                    //linea 27
+                    servicio.gCamItem gCamItem27 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem27 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem27 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA27 = new servicio.gCamIVA();
+                    //linea 28
+                    servicio.gCamItem gCamItem28 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem28 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem28 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA28 = new servicio.gCamIVA();
+                    //linea 29
+                    servicio.gCamItem gCamItem29 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem29 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem29 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA29 = new servicio.gCamIVA();
+                    //linea 30
+                    servicio.gCamItem gCamItem30 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem30 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem30 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA30 = new servicio.gCamIVA();
+                    //linea 31
+                    servicio.gCamItem gCamItem31 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem31 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem31 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA31 = new servicio.gCamIVA();
+                    //linea 32
+                    servicio.gCamItem gCamItem32 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem32 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem32 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA32 = new servicio.gCamIVA();
+                    //linea 33
+                    servicio.gCamItem gCamItem33 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem33 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem33 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA33 = new servicio.gCamIVA();
+                    //linea 34
+                    servicio.gCamItem gCamItem34 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem34 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem34 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA34 = new servicio.gCamIVA();
+                    //linea 35
+                    servicio.gCamItem gCamItem35 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem35 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem35 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA35 = new servicio.gCamIVA();
+                    //linea 36
+                    servicio.gCamItem gCamItem36 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem36 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem36 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA36 = new servicio.gCamIVA();
+                    //linea 37
+                    servicio.gCamItem gCamItem37 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem37 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem37 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA37 = new servicio.gCamIVA();
+                    //linea 38
+                    servicio.gCamItem gCamItem38 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem38 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem38 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA38 = new servicio.gCamIVA();
+                    //linea 39
+                    servicio.gCamItem gCamItem39 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem39 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem39 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA39 = new servicio.gCamIVA();
+                    //linea 40
+                    servicio.gCamItem gCamItem40 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem40 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem40 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA40 = new servicio.gCamIVA();
+                    //linea 41
+                    servicio.gCamItem gCamItem41 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem41 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem41 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA41 = new servicio.gCamIVA();
+                    //linea 42
+                    servicio.gCamItem gCamItem42 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem42 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem42 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA42 = new servicio.gCamIVA();
+                    //linea 43
+                    servicio.gCamItem gCamItem43 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem43 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem43 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA43 = new servicio.gCamIVA();
+                    //linea 44
+                    servicio.gCamItem gCamItem44 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem44 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem44 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA44 = new servicio.gCamIVA();
+                    //linea 45
+                    servicio.gCamItem gCamItem45 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem45 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem45 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA45 = new servicio.gCamIVA();
+                    #endregion
+                    #endregion
+
+                    //armamos la estructura que enviaremos con los datos
+                    //gOpeDE
+                    gOpeDE.iTipEmi = "1";
+                    string oper = oDatos.Fields.Item(25).Value.ToString();
+                    if (!string.IsNullOrEmpty(infoadicional))
+                    {
+                        gOpeDE.dInfoEmi = infoadicional;
+                    }
+                    //gTimb
+                    gTimb.iTiDE = documento;
+                    gTimb.dDesTiDE = descdoc;
+                    gTimb.dNumTim = timbrado;
+                    gTimb.dEst = esta;
+                    gTimb.dPunExp = pun;
+                    gTimb.dNumDoc = folio.ToString("D7");
+                    //gDatGralOpe
+                    //armamos el formato de la fecha
+                    string hora = oDatos.Fields.Item(21).Value.ToString();
+                    DateTime fe = Convert.ToDateTime(oDatos.Fields.Item(7).Value.ToString());
+                    string fecha = fe.ToString("yyyy-MM-dd") + "T" + hora; //oDatos.Fields.Item(7).Value.ToString("yyyy-MM-dd") + "T" + hora;        
+                    gDatGralOpe.dFeEmiDE = DateTime.Parse(fecha);//DateTime.Parse("2022-11-01T17:41:55");
+                    gDatGralOpe.dFeEmiDESpecified = true;
+                    //gOpeCom
+                    //tipo de transaccion
+                    string transaccion = oDatos.Fields.Item(23).Value.ToString();
+                    string TipTra = null;
+                    string DesTipTra = null;
+                    if (transaccion.Equals("1")) { TipTra = "1"; DesTipTra = "Venta de mercadería"; }
+                    if (transaccion.Equals("2")) { TipTra = "2"; DesTipTra = "Prestación de servicios"; }
+                    if (transaccion.Equals("3")) { TipTra = "3"; DesTipTra = "Mixto (Venta de mercadería y servicios) "; }
+                    if (transaccion.Equals("4")) { TipTra = "4"; DesTipTra = "Venta de activo fijo"; }
+                    if (transaccion.Equals("5")) { TipTra = "5"; DesTipTra = "Venta de divisas"; }
+                    if (transaccion.Equals("6")) { TipTra = "6"; DesTipTra = "Compra de divisas"; }
+                    if (transaccion.Equals("7")) { TipTra = "7"; DesTipTra = "Promoción o entrega de muestras"; }
+                    if (transaccion.Equals("8")) { TipTra = "8"; DesTipTra = "Donación"; }
+                    if (transaccion.Equals("9")) { TipTra = "9"; DesTipTra = "Anticipo"; }
+                    if (transaccion.Equals("10")) { TipTra = "10"; DesTipTra = "Compra de productos"; }
+                    if (transaccion.Equals("11")) { TipTra = "11"; DesTipTra = "Compra de servicios"; }
+                    if (transaccion.Equals("12")) { TipTra = "12"; DesTipTra = "Venta de crédito fiscal"; }
+                    if (transaccion.Equals("13")) { TipTra = "13"; DesTipTra = "Muestras médicas (Art. 3 RG 24 / 2014)"; }
+
+                    if (tablacab.Equals("OINV"))
+                    {
+                        gOpeCom.iTipTra = TipTra;// oDatos.Fields.Item(23).Value.ToString();
+                        gOpeCom.dDesTipTra = DesTipTra;// "Venta de mercadería";
+                    }
+
+                    gOpeCom.iTImp = oDatos.Fields.Item(24).Value.ToString();
+                    gOpeCom.cMoneOpe = oDatos.Fields.Item(8).Value.ToString();
+                    //en caso de que sea DOLAR
+                    if (oDatos.Fields.Item(8).Value.ToString() == "USD")
+                    {
+                        gOpeCom.dCondTiCam = "1";
+                        gOpeCom.dTiCam = decimal.Parse(oDatos.Fields.Item(28).Value.ToString());
+                        gOpeCom.dTiCamSpecified = true;
+                    }
+                    //gEmis
+                    gEmis.dRucEm = rucE;
+                    gEmis.dDVEmi = dvE;
+                    //gEmis.dDirEmi = "";//la direccion del punto de expedicion           
+                    //gDatRec
+                    gDatRec.iNatRec = oDatos.Fields.Item(26).Value.ToString();
+                    if (oDatos.Fields.Item(26).Value.ToString() == "2")
+                    {
+                        gDatRec.iTiOpe = "2";
+                        //gDatRec.iTiContRec = "1";
+                    }
+                    else
+                    {
+                        gDatRec.iTiOpe = oDatos.Fields.Item(25).Value.ToString();
+                        gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
+                    }
+                    if (!string.IsNullOrEmpty(correo))
+                    {
+                        gDatRec.dEmailRec = correo;
+                    }
+                    //gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
+                    //validad si el pais esta vacio, enviar PRY por defecto
+                    string pais = oDatos.Fields.Item(16).Value.ToString();
+                    if (string.IsNullOrEmpty(pais))
+                    {
+                        gDatRec.cPaisRec = "PRY";
+                    }
+                    else
+                    {
+                        gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
+                    }
+
+                    //gDatRec.dDesPaisRe = "Paraguay";
+
+                    if (tablacab.Equals("ORIN"))
+                    {
+                        gCamNCDE.iMotEmi = "1";//hay que modificar
+                    }
+                    //si es contribuyente le pasamos el ruc sino la cedula
+                    if (oDatos.Fields.Item(26).Value.ToString() == "1" || oDatos.Fields.Item(26).Value.ToString() == "3")
+                    {
+                        gDatRec.dRucRec = ruc;
+                        gDatRec.dDVRec = dv;
+                    }
+                    else
+                    {
+                        gDatRec.dNumIDRec = oDatos.Fields.Item(4).Value.ToString();
+                        gDatRec.iTipIDRec = "1";
+                    }
+
+                    if (tablacab.Equals("OINV"))
+                    {
+                        //REMITO
+                        #region REMITO
+                        if (!string.IsNullOrEmpty(trans))
+                        {
+                            string chof = oDatos.Fields.Item(32).Value.ToString();
+                            if (!chof.Equals("PERSONAL"))
+                            {
+                                string CedChofer = oDatos.Fields.Item(35).Value.ToString();
+                                if (!string.IsNullOrEmpty(CedChofer))
+                                {
+                                    string dirReceptor = oDatos.Fields.Item(5).Value.ToString();
+                                    string NewDirRec = null;
+                                    if (!Regex.IsMatch(dirReceptor, @"^[a-zA-Z-0-9]+$") == true)
+                                    {
+                                        NewDirRec = Regex.Replace(dirReceptor, @"[^0-9a-zA-Z ]+", "");
+
+                                    }
+                                    else
+                                    {
+                                        NewDirRec = dirReceptor;
+
+                                    }
+                                    string salDire = oDatos.Fields.Item(37).Value.ToString();
+                                    string newsalDire = null;
+                                    if (!Regex.IsMatch(salDire, @"^[a-zA-Z-0-9]+$") == true)
+                                    {
+                                        newsalDire = Regex.Replace(salDire, @"[^0-9a-zA-Z ]+", "");
+
+                                    }
+                                    else
+                                    {
+                                        newsalDire = salDire;
+
+                                    }
+                                    string DomFiscal = oDatos.Fields.Item(42).Value.ToString();
+                                    string newDomFiscal = null;
+                                    if (!Regex.IsMatch(DomFiscal, @"^[a-zA-Z-0-9]+$") == true)
+                                    {
+                                        newDomFiscal = Regex.Replace(DomFiscal, @"[^0-9a-zA-Z ]+", "");
+
+                                    }
+                                    else
+                                    {
+                                        newDomFiscal = DomFiscal;
+
+                                    }
+                                    string DireChofer = oDatos.Fields.Item(36).Value.ToString();
+                                    string newDireChofer = null;
+                                    if (!Regex.IsMatch(DireChofer, @"^[a-zA-Z-0-9]+$") == true)
+                                    {
+                                        newDireChofer = Regex.Replace(DireChofer, @"[^0-9a-zA-Z ]+", "");
+
+                                    }
+                                    else
+                                    {
+                                        newDireChofer = DireChofer;
+
+                                    }
+                                    string codTransp = null;
+                                    string descTrans = null;
+                                    if (oDatos.Fields.Item(38).Value.ToString() == varE)
+                                    {
+                                        codTransp = "1";
+                                        descTrans = "Propio";
+                                    }
+                                    else
+                                    {
+                                        codTransp = "2";
+                                        descTrans = "Tercero";
+                                    }
+                                    gDatRec.dDirRec = NewDirRec;// oDatos.Fields.Item(5).Value.ToString();
+                                    gDatRec.dNumCasRec = "0";
+                                    gDatRec.cDepRec = rec_dep;
+                                    gDatRec.cDisRec = rec_dist;
+                                    gDatRec.cCiuRec = rec_loc;
+                                    //gCamSal               
+                                    gCamSal.dDirLocSal = newsalDire;// oDatos.Fields.Item(37).Value.ToString();
+                                    gCamSal.dNumCasSal = "0";
+                                    //gCamSal.dComp1Sal =  "aviadores del chaco";
+                                    gCamSal.cDepSal = sal_dep;
+                                    gCamSal.cCiuSal = sal_loc;
+                                    gCamSal.cDisSal = sal_dist;
+                                    //gCamEnt
+                                    gCamEnt.dDirLocEnt = NewDirRec;// oDatos.Fields.Item(5).Value.ToString();
+                                    gCamEnt.dNumCasEnt = "0";
+                                    gCamEnt.cDepEnt = rec_dep;
+                                    gCamEnt.cCiuEnt = rec_loc;
+                                    gCamEnt.cDisEnt = rec_dist;
+                                    gCamEnt1[0] = gCamEnt;
+                                    gTransp.iTipTrans = codTransp;// "2";
+                                    gTransp.dDesTipTrans = descTrans;// "Tercero";
+                                    gTransp.iModTrans = "1";
+                                    gTransp.iRespFlete = RespFlete;
+                                    gTransp.dIniTras = fe;
+                                    gTransp.dIniTrasSpecified = true;
+                                    gTransp.dFinTras = fe;
+                                    gTransp.dFinTrasSpecified = true;
+                                    //gVehTras
+                                    //gTransp.gVehTras = gVehTras1;
+                                    gVehTras1[0] = gVehTras;
+                                    gVehTras.dTiVehTras = "Terrestre";
+                                    gVehTras.dMarVeh = oDatos.Fields.Item(34).Value.ToString();
+                                    gVehTras.dTipIdenVeh = "2";
+                                    gVehTras.dNroMatVeh = oDatos.Fields.Item(33).Value.ToString();
+                                    //gCamTrans
+                                    gCamTrans.iNatTrans = oDatos.Fields.Item(40).Value.ToString();
+                                    gCamTrans.dNomTrans = oDatos.Fields.Item(39).Value.ToString();
+                                    //deconstruimos el RUC del transportista
+                                    string varCam = oDatos.Fields.Item(38).Value.ToString();
+                                    int indexCam = varCam.IndexOf("-");
+                                    int canCam = oDatos.Fields.Item(38).Value.ToString().Length;
+                                    string rucCam = oDatos.Fields.Item(38).Value.ToString().Remove(indexCam, canCam - indexCam);
+                                    string dvCam = oDatos.Fields.Item(38).Value.ToString().Remove(0, indexCam + 1);
+                                    gCamTrans.dRucTrans = rucCam;
+                                    gCamTrans.dDVTrans = dvCam;
+                                    gCamTrans.cNacTrans = oDatos.Fields.Item(43).Value.ToString();
+                                    gCamTrans.dDesNacTrans = oDatos.Fields.Item(44).Value.ToString();
+                                    gCamTrans.dDomFisc = newDomFiscal;// oDatos.Fields.Item(42).Value.ToString();
+                                    gCamTrans.dNumIDChof = oDatos.Fields.Item(35).Value.ToString();
+                                    gCamTrans.dNomChof = oDatos.Fields.Item(32).Value.ToString();
+                                    gCamTrans.dDirChof = newDireChofer;// oDatos.Fields.Item(36).Value.ToString();
+                                                                       //gCamNRE
+                                                                       //gCamNRE.iMotEmiNR = "1";
+                                                                       //gCamNRE.dDesMotEmiNR = "Traslado por ventas";
+                                                                       //gCamNRE.iRespEmiNR = "1";
+                                                                       //gCamNRE.dDesRespEmiNR = "Emisor de la factura";
+                                    gCamNRE.dKmR = "3";
+                                    //gDtipDE.gCamNRE = gCamNRE;
+                                    gTransp.gCamTrans = gCamTrans;
+                                    gTransp.gCamSal = gCamSal;
+                                    gTransp.gCamEnt = gCamEnt1;
+                                    gTransp.gVehTras = gVehTras1;
+                                    gDtipDE.gTransp = gTransp;
+                                }
+
+                            }
+
+
+                        }
+                        #endregion
+                    }
+
+                    //LICITACION
+                    #region LICITACION
+                    if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                    {
+                        Recordset oLicitacion;
+                        oLicitacion = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oLicitacion.DoQuery("SELECT \"U_dModCont\",\"U_dEntCont\",\"U_dAnoCont\",\"U_dSecCont\",\"U_dFeCodCont\" FROM \"@LICITACION\" WHERE \"U_LICI\"='" + CodLicitacion + "'");
+
+                        gCompPub.dModCont = oLicitacion.Fields.Item(0).Value.ToString();//"LP";
+                        gCompPub.dEntCont = oLicitacion.Fields.Item(1).Value.ToString(); //"12009";
+                        gCompPub.dAnoCont = oLicitacion.Fields.Item(2).Value.ToString(); //"22";
+                        int sec = int.Parse(oLicitacion.Fields.Item(3).Value.ToString());
+                        gCompPub.dSecCont = sec.ToString("D7");// oLicitacion.Fields.Item(3).Value.ToString(); //"218529";
+                        DateTime v_fechaLic = DateTime.Parse(oLicitacion.Fields.Item(4).Value.ToString());
+                        string fechalic_v = v_fechaLic.ToString("yyyy-MM-dd");
+                        gCompPub.dFeCodCont = DateTime.Parse(fechalic_v);//DateTime.Parse("2022-08-31");
+                        gCompPub.dFeCodContSpecified = true;
+                        gCamFE.gCompPub = gCompPub;
+                        //gDtipDE.gCamFE = gCamFE;
+                    }
+                    #endregion
+
+
+
+                    gDatRec.dNomRec = oDatos.Fields.Item(3).Value.ToString();//"BIGGIE S.A - LAMBARE ROA BASTOS";
+                                                                             //gDatRec.dDirRec = oDatos.Fields.Item(5).Value.ToString();//"AVDA AUGUSTO ROA BASTOS esq San Marcos";
+                                                                             //gDatRec.dNumCasRec = "0";
+                    gDatRec.dTelRec = oDatos.Fields.Item(6).Value.ToString();//"021615257";
+                                                                             //gDatRec.dCelRec = "0981888493";
+                                                                             //consultamos si es credito o contado a operacion
+                    string condicion = oDatos.Fields.Item(9).Value.ToString();
+                    if (tablacab.Equals("OINV"))
+                    {
+                        //gCamFE
+                        gCamFE.iIndPres = oDatos.Fields.Item(22).Value.ToString();
+                        //gCamCond
+                        gCamCond.iCondOpe = oDatos.Fields.Item(9).Value.ToString(); //"2";               
+
+                        if (oDatos.Fields.Item(9).Value.ToString() == "2")
+                        {
+                            //consultamos si el campo de cuota es mayor a cero
+                            int Cuota = int.Parse(oDatos.Fields.Item(20).Value.ToString());
+                            string concred = null;
+                            if (Cuota > 0)
+                            {
+                                concred = "2";
+                            }
+                            else
+                            {
+                                concred = "1";
+                            }
+                            if (concred.Equals("2"))
+                            {
+                                gPagCred.dCuotas = Cuota.ToString();
+                                gPagCred.iCondCred = concred;
+                            }
+                            else
+                            {
+                                //gPagCred
+                                int plazo = int.Parse(oDatos.Fields.Item(10).Value.ToString());
+                                gPagCred.dPlazoCre = plazo.ToString("D2");//oDatos.Fields.Item(10).Value.ToString(); //"12";
+                                gPagCred.iCondCred = concred;
+                            }
+                        }
+                    }
+                    //si es contado mandamos el tipo de pago
+                    if (condicion.Equals("1"))
+                    {
+                        gPaConEIni.iTiPago = "1";
+                        gPaConEIni.dMonTiPag = decimal.Parse(oDatos.Fields.Item(29).Value.ToString());
+                        gPaConEIni.cMoneTiPag = oDatos.Fields.Item(8).Value.ToString();
+                        if (oDatos.Fields.Item(8).Value.ToString() == "USD")
+                        {
+                            gPaConEIni.dTiCamTiPag = decimal.Parse(oDatos.Fields.Item(28).Value.ToString());
+                            gPaConEIni.dTiCamTiPagSpecified = true;
+                        }
+                        gPaConEIni1[0] = gPaConEIni;
+                    }
+                    //gCamItem
+                    int f = 0;
+                    //gCamItem1.Initialize();
+                    //recorremos el recordset y mandamos los datos del detalle al objeto
+
+                    //conexion
+                    if (false == oCompany.InTransaction)
+                    {
+                        oCompany.StartTransaction();
+                    }
+                    //convertir el decimall a int
+                    int v_deciGR = int.Parse(v_DecimalGR);
+                    string v_monedaDoc = oDatos.Fields.Item(8).Value.ToString();
+                    while (!oDatos.EoF)
+                    {
+                        //calculo para la gravada e iva
+                        decimal c_gravada10 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,1"));
+                        decimal c_iva10 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"))));
+                        decimal c_gravada5 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,05"));
+                        decimal c_iva5 = Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"))));
+
+                        #region DETALLE DOCUMENTO
+                        if (f == 0)
+                        {
+                            gCamItem.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem.dDncpG = dncpNum.ToString();
+                            }
+
+                            //gValorItem
+
+                            string pp = oDatos.Fields.Item(14).Value.ToString();
+                            gValorItem.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem.dDescItem = 0;
+                                gValorRestaItem.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem.dDescItem = 0;
+                                gValorRestaItem.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            //gValorItem
+                            //gValorItem.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            //gValorRestaItem.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;
+                            //gValorRestaItem.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA.iAfecIVA = "1";
+                                gCamIVA.dPropIVA = 100;
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA.dPropIVA = 100;
+                                        gCamIVA.dBasGravIVA = c_gravada10;// Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()))) / decimal.Parse("1,1"));
+                                        gCamIVA.dLiqIVAItem = c_iva10;//Math.Round(decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"))));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA.dPropIVA = 100;
+                                        gCamIVA.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA.dBasGravIVA = c_gravada5;// Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA.dPropIVA = 100;
+                                        gCamIVA.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA.iAfecIVA = "3";
+                                gCamIVA.dBasGravIVA = 0;
+                                gCamIVA.dLiqIVAItem = 0;
+                            }
+                            gCamIVA.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem.gValorRestaItem = gValorRestaItem;
+                            gCamItem.gValorItem = gValorItem;
+                            gCamItem.gCamIVA = gCamIVA;
+                            gCamItem1[f] = gCamItem;
+                        }
+                        if (f == 1)
+                        {
+                            gCamItem2.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem2.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem2.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem2.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem2.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem2.dDncpG = dncpNum.ToString();
+                            }
+
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem2.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem2.dDescItem = 0;
+                                gValorRestaItem2.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem2.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem2.dDescItem = 0;
+                                gValorRestaItem2.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem                       
+                            //gValorRestaItem2.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA2.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA2.dPropIVA = 100;
+                                        gCamIVA2.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA2.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA2.dPropIVA = 100;
+                                        gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA2.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA2.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA2.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA2.dPropIVA = 100;
+                                        gCamIVA2.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA2.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA2.iAfecIVA = "3";
+                                gCamIVA2.dBasGravIVA = 0;
+                                gCamIVA2.dLiqIVAItem = 0;
+                            }
+                            gCamIVA2.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem2.gValorRestaItem = gValorRestaItem2;
+                            gCamItem2.gValorItem = gValorItem2;
+                            gCamItem2.gCamIVA = gCamIVA2;
+                            gCamItem1[f] = gCamItem2;
+                        }
+                        if (f == 2)
+                        {
+                            gCamItem3.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem3.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem3.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem3.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem3.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem3.dDncpG = dncpNum.ToString();
+                            }
+
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem3.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem3.dDescItem = 0;
+                                gValorRestaItem3.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem3.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem3.dDescItem = 0;
+                                gValorRestaItem3.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem3.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem3.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem3.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem3.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA3.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA3.dPropIVA = 100;
+                                        gCamIVA3.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA3.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA3.dPropIVA = 100;
+                                        gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA3.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA3.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA3.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA3.dPropIVA = 100;
+                                        gCamIVA3.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA3.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA3.iAfecIVA = "3";
+                                gCamIVA3.dBasGravIVA = 0;
+                                gCamIVA3.dLiqIVAItem = 0;
+                            }
+                            gCamIVA3.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem3.gValorRestaItem = gValorRestaItem3;
+                            gCamItem3.gValorItem = gValorItem3;
+                            gCamItem3.gCamIVA = gCamIVA3;
+                            gCamItem1[f] = gCamItem3;
+                        }
+                        if (f == 3)
+                        {
+                            gCamItem4.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem4.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem4.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem4.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem4.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem4.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem4.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem4.dDescItem = 0;
+                                gValorRestaItem4.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem4.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem4.dDescItem = 0;
+                                gValorRestaItem4.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem4.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem4.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem4.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem4.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA4.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA4.dPropIVA = 100;
+                                        gCamIVA4.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA4.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA4.dPropIVA = 100;
+                                        gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA4.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA4.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA4.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA4.dPropIVA = 100;
+                                        gCamIVA4.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA4.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA4.iAfecIVA = "3";
+                                gCamIVA4.dBasGravIVA = 0;
+                                gCamIVA4.dLiqIVAItem = 0;
+                            }
+                            gCamIVA4.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem4.gValorRestaItem = gValorRestaItem4;
+                            gCamItem4.gValorItem = gValorItem4;
+                            gCamItem4.gCamIVA = gCamIVA4;
+                            gCamItem1[f] = gCamItem4;
+                        }
+                        if (f == 4)
+                        {
+                            gCamItem5.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem5.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem5.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem5.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem5.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem5.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem5.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem5.dDescItem = 0;
+                                gValorRestaItem5.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem5.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem5.dDescItem = 0;
+                                gValorRestaItem5.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem5.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem5.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem5.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem5.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA5.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA5.dPropIVA = 100;
+                                        gCamIVA5.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA5.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA5.dPropIVA = 100;
+                                        gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA5.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA5.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA5.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA5.dPropIVA = 100;
+                                        gCamIVA5.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA5.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA5.iAfecIVA = "3";
+                                gCamIVA5.dBasGravIVA = 0;
+                                gCamIVA5.dLiqIVAItem = 0;
+                            }
+                            gCamIVA5.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem5.gValorRestaItem = gValorRestaItem5;
+                            gCamItem5.gValorItem = gValorItem5;
+                            gCamItem5.gCamIVA = gCamIVA5;
+                            gCamItem1[f] = gCamItem5;
+                        }
+                        if (f == 5)
+                        {
+                            gCamItem6.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem6.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem6.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem6.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem6.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem6.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem6.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem6.dDescItem = 0;
+                                gValorRestaItem6.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem6.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem6.dDescItem = 0;
+                                gValorRestaItem6.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem6.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem6.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem6.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem6.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA6.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA6.dPropIVA = 100;
+                                        gCamIVA6.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA6.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA6.dPropIVA = 100;
+                                        gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA6.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA6.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA6.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA6.dPropIVA = 100;
+                                        gCamIVA6.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA6.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA6.iAfecIVA = "3";
+                                gCamIVA6.dBasGravIVA = 0;
+                                gCamIVA6.dLiqIVAItem = 0;
+                            }
+                            gCamIVA6.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem6.gValorRestaItem = gValorRestaItem6;
+                            gCamItem6.gValorItem = gValorItem6;
+                            gCamItem6.gCamIVA = gCamIVA6;
+                            gCamItem1[f] = gCamItem6;
+                        }
+                        if (f == 6)
+                        {
+                            gCamItem7.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem7.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem7.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem7.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem7.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem7.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem7.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem7.dDescItem = 0;
+                                gValorRestaItem7.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem7.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem7.dDescItem = 0;
+                                gValorRestaItem7.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem7.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem7.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem7.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem7.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA7.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA7.dPropIVA = 100;
+                                        gCamIVA7.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA7.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA7.dPropIVA = 100;
+                                        gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA7.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA7.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA7.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA7.dPropIVA = 100;
+                                        gCamIVA7.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA7.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA7.iAfecIVA = "3";
+                                gCamIVA7.dBasGravIVA = 0;
+                                gCamIVA7.dLiqIVAItem = 0;
+                            }
+                            gCamIVA7.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem7.gValorRestaItem = gValorRestaItem7;
+                            gCamItem7.gValorItem = gValorItem7;
+                            gCamItem7.gCamIVA = gCamIVA7;
+                            gCamItem1[f] = gCamItem7;
+                        }
+                        if (f == 7)
+                        {
+                            gCamItem8.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem8.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem8.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem8.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem8.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem8.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem8.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem8.dDescItem = 0;
+                                gValorRestaItem8.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem8.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem8.dDescItem = 0;
+                                gValorRestaItem8.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem8.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem8.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem8.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem8.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA8.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA8.dPropIVA = 100;
+                                        gCamIVA8.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA8.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA8.dPropIVA = 100;
+                                        gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA8.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA8.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA8.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA8.dPropIVA = 100;
+                                        gCamIVA8.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA8.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA8.iAfecIVA = "3";
+                                gCamIVA8.dBasGravIVA = 0;
+                                gCamIVA8.dLiqIVAItem = 0;
+                            }
+                            gCamIVA8.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem8.gValorRestaItem = gValorRestaItem8;
+                            gCamItem8.gValorItem = gValorItem8;
+                            gCamItem8.gCamIVA = gCamIVA8;
+                            gCamItem1[f] = gCamItem8;
+                        }
+                        if (f == 8)
+                        {
+                            gCamItem9.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem9.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem9.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem9.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem9.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem9.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem9.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem9.dDescItem = 0;
+                                gValorRestaItem9.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem9.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem9.dDescItem = 0;
+                                gValorRestaItem9.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem9.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem9.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem9.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem9.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA9.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA9.dPropIVA = 100;
+                                        gCamIVA9.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA9.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA9.dPropIVA = 100;
+                                        gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA9.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA9.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA9.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA9.dPropIVA = 100;
+                                        gCamIVA9.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA9.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA9.iAfecIVA = "3";
+                                gCamIVA9.dBasGravIVA = 0;
+                                gCamIVA9.dLiqIVAItem = 0;
+                            }
+                            gCamIVA9.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem9.gValorRestaItem = gValorRestaItem9;
+                            gCamItem9.gValorItem = gValorItem9;
+                            gCamItem9.gCamIVA = gCamIVA9;
+                            gCamItem1[f] = gCamItem9;
+                        }
+                        if (f == 9)
+                        {
+                            gCamItem10.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem10.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem10.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem10.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem10.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem10.dDncpG = dncpNum.ToString();
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem10.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem10.dDescItem = 0;
+                                gValorRestaItem10.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem10.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem10.dDescItem = 0;
+                                gValorRestaItem10.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem10.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem10.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem10.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem10.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA10.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA10.dPropIVA = 100;
+                                        gCamIVA10.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA10.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA10.dPropIVA = 100;
+                                        gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA10.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA10.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA10.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA10.dPropIVA = 100;
+                                        gCamIVA10.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA10.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA10.iAfecIVA = "3";
+                                gCamIVA10.dBasGravIVA = 0;
+                                gCamIVA10.dLiqIVAItem = 0;
+                            }
+                            gCamIVA10.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem10.gValorRestaItem = gValorRestaItem10;
+                            gCamItem10.gValorItem = gValorItem10;
+                            gCamItem10.gCamIVA = gCamIVA10;
+                            gCamItem1[f] = gCamItem10;
+                        }
+                        if (f == 10)
+                        {
+                            gCamItem11.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem11.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem11.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem11.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem11.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem11.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem11.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem11.dDescItem = 0;
+                                gValorRestaItem11.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem11.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem11.dDescItem = 0;
+                                gValorRestaItem11.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            //gValorItem
+                            //gValorItem11.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem11.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            //gValorRestaItem11.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;
+                            //gValorRestaItem11.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA11.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA11.dPropIVA = 100;
+                                        gCamIVA11.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA11.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA11.dPropIVA = 100;
+                                        gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA11.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA11.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA11.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA11.dPropIVA = 100;
+                                        gCamIVA11.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA11.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA11.iAfecIVA = "3";
+                                gCamIVA11.dBasGravIVA = 0;
+                                gCamIVA11.dLiqIVAItem = 0;
+                            }
+                            gCamIVA11.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem11.gValorRestaItem = gValorRestaItem11;
+                            gCamItem11.gValorItem = gValorItem11;
+                            gCamItem11.gCamIVA = gCamIVA11;
+                            gCamItem1[f] = gCamItem11;
+                        }
+                        if (f == 11)
+                        {
+                            gCamItem12.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem12.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem12.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem12.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem12.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem12.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem12.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem12.dDescItem = 0;
+                                gValorRestaItem12.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem12.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem12.dDescItem = 0;
+                                gValorRestaItem12.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem12.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem12.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem12.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem12.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA12.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA12.dPropIVA = 100;
+                                        gCamIVA12.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA12.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA12.dPropIVA = 100;
+                                        gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA12.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA12.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA12.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA12.dPropIVA = 100;
+                                        gCamIVA12.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA12.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA12.iAfecIVA = "3";
+                                gCamIVA12.dBasGravIVA = 0;
+                                gCamIVA12.dLiqIVAItem = 0;
+                            }
+                            gCamIVA12.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem12.gValorRestaItem = gValorRestaItem12;
+                            gCamItem12.gValorItem = gValorItem12;
+                            gCamItem12.gCamIVA = gCamIVA12;
+                            gCamItem1[f] = gCamItem12;
+                        }
+                        if (f == 12)
+                        {
+                            gCamItem13.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem13.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem13.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem13.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem13.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem13.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem13.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem13.dDescItem = 0;
+                                gValorRestaItem13.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem13.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem13.dDescItem = 0;
+                                gValorRestaItem13.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem13.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem13.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem13.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem13.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA13.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA13.dPropIVA = 100;
+                                        gCamIVA13.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA13.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA13.dPropIVA = 100;
+                                        gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA13.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA13.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA13.dLiqIVAItem = c_iva5; Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA13.dPropIVA = 100;
+                                        gCamIVA13.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA13.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA13.iAfecIVA = "3";
+                                gCamIVA13.dBasGravIVA = 0;
+                                gCamIVA13.dLiqIVAItem = 0;
+                            }
+                            gCamIVA13.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem13.gValorRestaItem = gValorRestaItem13;
+                            gCamItem13.gValorItem = gValorItem13;
+                            gCamItem13.gCamIVA = gCamIVA13;
+                            gCamItem1[f] = gCamItem13;
+                        }
+                        if (f == 13)
+                        {
+                            gCamItem14.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem14.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem14.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem14.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem14.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem14.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem14.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem14.dDescItem = 0;
+                                gValorRestaItem14.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem14.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem14.dDescItem = 0;
+                                gValorRestaItem14.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem14.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem14.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem14.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem14.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA14.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA14.dPropIVA = 100;
+                                        gCamIVA14.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA14.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA14.dPropIVA = 100;
+                                        gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA14.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA14.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA14.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA14.dPropIVA = 100;
+                                        gCamIVA14.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA14.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA14.iAfecIVA = "3";
+                                gCamIVA14.dBasGravIVA = 0;
+                                gCamIVA14.dLiqIVAItem = 0;
+                            }
+                            gCamIVA14.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem14.gValorRestaItem = gValorRestaItem14;
+                            gCamItem14.gValorItem = gValorItem14;
+                            gCamItem14.gCamIVA = gCamIVA14;
+                            gCamItem1[f] = gCamItem14;
+                        }
+                        if (f == 14)
+                        {
+                            gCamItem15.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem15.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem15.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem15.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem15.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem15.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem15.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem15.dDescItem = 0;
+                                gValorRestaItem15.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem15.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem15.dDescItem = 0;
+                                gValorRestaItem15.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem15.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem15.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem15.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem15.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA15.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA15.dPropIVA = 100;
+                                        gCamIVA15.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA15.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA15.dPropIVA = 100;
+                                        gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA15.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA15.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA15.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA15.dPropIVA = 100;
+                                        gCamIVA15.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA15.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA15.iAfecIVA = "3";
+                                gCamIVA15.dBasGravIVA = 0;
+                                gCamIVA15.dLiqIVAItem = 0;
+                            }
+                            gCamIVA15.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem15.gValorRestaItem = gValorRestaItem15;
+                            gCamItem15.gValorItem = gValorItem15;
+                            gCamItem15.gCamIVA = gCamIVA15;
+                            gCamItem1[f] = gCamItem15;
+                        }
+                        if (f == 15)
+                        {
+                            gCamItem16.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem16.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem16.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem16.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem16.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem16.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem16.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem16.dDescItem = 0;
+                                gValorRestaItem16.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem16.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem16.dDescItem = 0;
+                                gValorRestaItem16.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem16.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem16.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem16.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem16.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA16.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA16.dPropIVA = 100;
+                                        gCamIVA16.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA16.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA16.dPropIVA = 100;
+                                        gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA16.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA16.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA16.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA16.dPropIVA = 100;
+                                        gCamIVA16.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA16.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA16.iAfecIVA = "3";
+                                gCamIVA16.dBasGravIVA = 0;
+                                gCamIVA16.dLiqIVAItem = 0;
+                            }
+                            gCamIVA16.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem16.gValorRestaItem = gValorRestaItem16;
+                            gCamItem16.gValorItem = gValorItem16;
+                            gCamItem16.gCamIVA = gCamIVA16;
+                            gCamItem1[f] = gCamItem16;
+                        }
+                        if (f == 16)
+                        {
+                            gCamItem17.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem17.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem17.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem17.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem17.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem17.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem17.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem17.dDescItem = 0;
+                                gValorRestaItem17.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem17.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem17.dDescItem = 0;
+                                gValorRestaItem17.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem17.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem17.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem17.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem17.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA17.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA17.dPropIVA = 100;
+                                        gCamIVA17.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA17.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA17.dPropIVA = 100;
+                                        gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA17.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA17.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA17.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA17.dPropIVA = 100;
+                                        gCamIVA17.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA17.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA17.iAfecIVA = "3";
+                                gCamIVA17.dBasGravIVA = 0;
+                                gCamIVA17.dLiqIVAItem = 0;
+                            }
+                            gCamIVA17.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem17.gValorRestaItem = gValorRestaItem17;
+                            gCamItem17.gValorItem = gValorItem17;
+                            gCamItem17.gCamIVA = gCamIVA17;
+                            gCamItem1[f] = gCamItem17;
+                        }
+                        if (f == 17)
+                        {
+                            gCamItem18.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem18.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem18.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem18.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem18.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem18.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem18.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem18.dDescItem = 0;
+                                gValorRestaItem18.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem18.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem18.dDescItem = 0;
+                                gValorRestaItem18.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem18.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem18.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem18.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem18.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA18.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA18.dPropIVA = 100;
+                                        gCamIVA18.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA18.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA18.dPropIVA = 100;
+                                        gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA18.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA18.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA18.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA18.dPropIVA = 100;
+                                        gCamIVA18.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA18.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA18.iAfecIVA = "3";
+                                gCamIVA18.dBasGravIVA = 0;
+                                gCamIVA18.dLiqIVAItem = 0;
+                            }
+                            gCamIVA18.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem18.gValorRestaItem = gValorRestaItem18;
+                            gCamItem18.gValorItem = gValorItem18;
+                            gCamItem18.gCamIVA = gCamIVA18;
+                            gCamItem1[f] = gCamItem18;
+                        }
+                        if (f == 18)
+                        {
+                            gCamItem19.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem19.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem19.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem19.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());                                                                                 //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem19.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem19.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem19.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem19.dDescItem = 0;
+                                gValorRestaItem19.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem19.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem19.dDescItem = 0;
+                                gValorRestaItem19.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem19.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem19.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem19.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem19.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA19.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA19.dPropIVA = 100;
+                                        gCamIVA19.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA19.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA19.dPropIVA = 100;
+                                        gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA19.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA19.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA19.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA19.dPropIVA = 100;
+                                        gCamIVA19.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA19.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA19.iAfecIVA = "3";
+                                gCamIVA19.dBasGravIVA = 0;
+                                gCamIVA19.dLiqIVAItem = 0;
+                            }
+                            gCamIVA19.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem19.gValorRestaItem = gValorRestaItem19;
+                            gCamItem19.gValorItem = gValorItem19;
+                            gCamItem19.gCamIVA = gCamIVA19;
+                            gCamItem1[f] = gCamItem19;
+                        }
+                        if (f == 19)
+                        {
+                            gCamItem20.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem20.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem20.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            gValorItem20.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString());
+                            //Si es licitacion
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem20.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem20.dDncpG = dncpNum.ToString("D8");
+                            }
+                            if (v_monedaDoc.Equals("PYG"))
+                            {
+                                gValorItem20.dTotBruOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                                gValorRestaItem20.dDescItem = 0;
+                                gValorRestaItem20.dTotOpeItem = decimal.Round(decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString()));
+                            }
+                            else
+                            {
+                                gValorItem20.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                gValorRestaItem20.dDescItem = 0;
+                                gValorRestaItem20.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            }
+                            ////gValorItem
+                            //gValorItem20.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            //gValorItem20.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            ////gValorRestaItem
+                            //gValorRestaItem20.dDescItem = 0;
+                            ////gValorRestaItem.dAntPreUniIt = 0;
+                            ////gValorRestaItem.dTotOpeItem = 0;  
+                            //gValorRestaItem20.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA20.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA20.dPropIVA = 100;
+                                        gCamIVA20.dBasGravIVA = c_gravada10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA20.dLiqIVAItem = c_iva10;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA20.dPropIVA = 100;
+                                        gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"), v_deciGR);
+                                        gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")), v_deciGR);
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA20.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA20.dBasGravIVA = c_gravada5;//Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA20.dLiqIVAItem = c_iva5;//Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA20.dPropIVA = 100;
+                                        gCamIVA20.dBasGravIVA = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"), v_deciGR);
+                                        gCamIVA20.dLiqIVAItem = decimal.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")), v_deciGR);
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA20.iAfecIVA = "3";
+                                gCamIVA20.dBasGravIVA = 0;
+                                gCamIVA20.dLiqIVAItem = 0;
+                            }
+                            gCamIVA20.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem20.gValorRestaItem = gValorRestaItem20;
+                            gCamItem20.gValorItem = gValorItem20;
+                            gCamItem20.gCamIVA = gCamIVA20;
+                            gCamItem1[f] = gCamItem20;
+                        }
+                        if (f == 20)
+                        {
+                            gCamItem21.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem21.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem21.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem21.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem21.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem21.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem21.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA21.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA21.dPropIVA = 100;
+                                        gCamIVA21.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA21.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA21.dPropIVA = 100;
+                                        gCamIVA21.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA21.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA21.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA21.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA21.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA21.dPropIVA = 100;
+                                        gCamIVA21.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA21.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA21.iAfecIVA = "3";
+                                gCamIVA21.dBasGravIVA = 0;
+                                gCamIVA21.dLiqIVAItem = 0;
+                            }
+                            gCamIVA21.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem21.gValorRestaItem = gValorRestaItem21;
+                            gCamItem21.gValorItem = gValorItem21;
+                            gCamItem21.gCamIVA = gCamIVA21;
+                            gCamItem1[f] = gCamItem21;
+                        }
+                        if (f == 21)
+                        {
+                            gCamItem22.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem22.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem22.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem22.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem22.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem22.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem22.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA22.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA22.dPropIVA = 100;
+                                        gCamIVA22.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA22.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA22.dPropIVA = 100;
+                                        gCamIVA22.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA22.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA22.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA22.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA22.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA22.dPropIVA = 100;
+                                        gCamIVA22.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA22.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA22.iAfecIVA = "3";
+                                gCamIVA22.dBasGravIVA = 0;
+                                gCamIVA22.dLiqIVAItem = 0;
+                            }
+                            gCamIVA22.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem22.gValorRestaItem = gValorRestaItem22;
+                            gCamItem22.gValorItem = gValorItem22;
+                            gCamItem22.gCamIVA = gCamIVA22;
+                            gCamItem1[f] = gCamItem22;
+                        }
+                        if (f == 22)
+                        {
+                            gCamItem23.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem23.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem23.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem23.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem23.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem23.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem23.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA23.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA23.dPropIVA = 100;
+                                        gCamIVA23.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA23.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA23.dPropIVA = 100;
+                                        gCamIVA23.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA23.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA23.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA23.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA23.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA23.dPropIVA = 100;
+                                        gCamIVA23.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA23.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA23.iAfecIVA = "3";
+                                gCamIVA23.dBasGravIVA = 0;
+                                gCamIVA23.dLiqIVAItem = 0;
+                            }
+                            gCamIVA23.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem23.gValorRestaItem = gValorRestaItem23;
+                            gCamItem23.gValorItem = gValorItem23;
+                            gCamItem23.gCamIVA = gCamIVA23;
+                            gCamItem1[f] = gCamItem23;
+                        }
+                        if (f == 23)
+                        {
+                            gCamItem24.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem24.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem24.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem24.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem24.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem24.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem24.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA24.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA24.dPropIVA = 100;
+                                        gCamIVA24.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA24.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA24.dPropIVA = 100;
+                                        gCamIVA24.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA24.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA24.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA24.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA24.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA24.dPropIVA = 100;
+                                        gCamIVA24.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA24.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA24.iAfecIVA = "3";
+                                gCamIVA24.dBasGravIVA = 0;
+                                gCamIVA24.dLiqIVAItem = 0;
+                            }
+                            gCamIVA24.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem24.gValorRestaItem = gValorRestaItem24;
+                            gCamItem24.gValorItem = gValorItem24;
+                            gCamItem24.gCamIVA = gCamIVA24;
+                            gCamItem1[f] = gCamItem24;
+                        }
+                        if (f == 24)
+                        {
+                            gCamItem25.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem25.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem25.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem25.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem25.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem25.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem25.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA25.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA25.dPropIVA = 100;
+                                        gCamIVA25.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA25.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA25.dPropIVA = 100;
+                                        gCamIVA25.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA25.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA25.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA25.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA25.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA25.dPropIVA = 100;
+                                        gCamIVA25.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA25.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA25.iAfecIVA = "3";
+                                gCamIVA25.dBasGravIVA = 0;
+                                gCamIVA25.dLiqIVAItem = 0;
+                            }
+                            gCamIVA25.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem25.gValorRestaItem = gValorRestaItem25;
+                            gCamItem25.gValorItem = gValorItem25;
+                            gCamItem25.gCamIVA = gCamIVA25;
+                            gCamItem1[f] = gCamItem25;
+                        }
+                        if (f == 25)
+                        {
+                            gCamItem26.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem26.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem26.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem26.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem26.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem26.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem26.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA26.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA26.dPropIVA = 100;
+                                        gCamIVA26.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA26.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA26.dPropIVA = 100;
+                                        gCamIVA26.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA26.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA26.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA26.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA26.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA26.dPropIVA = 100;
+                                        gCamIVA26.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA26.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA26.iAfecIVA = "3";
+                                gCamIVA26.dBasGravIVA = 0;
+                                gCamIVA26.dLiqIVAItem = 0;
+                            }
+                            gCamIVA26.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem26.gValorRestaItem = gValorRestaItem26;
+                            gCamItem26.gValorItem = gValorItem26;
+                            gCamItem26.gCamIVA = gCamIVA26;
+                            gCamItem1[f] = gCamItem26;
+                        }
+                        if (f == 26)
+                        {
+                            gCamItem27.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem27.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem27.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem27.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem27.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem27.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem27.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA27.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA27.dPropIVA = 100;
+                                        gCamIVA27.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA27.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA27.dPropIVA = 100;
+                                        gCamIVA27.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA27.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA27.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA27.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA27.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA27.dPropIVA = 100;
+                                        gCamIVA27.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA27.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA27.iAfecIVA = "3";
+                                gCamIVA27.dBasGravIVA = 0;
+                                gCamIVA27.dLiqIVAItem = 0;
+                            }
+                            gCamIVA27.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem27.gValorRestaItem = gValorRestaItem27;
+                            gCamItem27.gValorItem = gValorItem27;
+                            gCamItem27.gCamIVA = gCamIVA27;
+                            gCamItem1[f] = gCamItem27;
+                        }
+                        if (f == 27)
+                        {
+                            gCamItem28.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem28.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem28.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem28.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem28.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem28.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem28.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA28.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA28.dPropIVA = 100;
+                                        gCamIVA28.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA28.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA28.dPropIVA = 100;
+                                        gCamIVA28.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA28.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA28.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA28.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA28.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA28.dPropIVA = 100;
+                                        gCamIVA28.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA28.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA28.iAfecIVA = "3";
+                                gCamIVA28.dBasGravIVA = 0;
+                                gCamIVA28.dLiqIVAItem = 0;
+                            }
+                            gCamIVA28.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem28.gValorRestaItem = gValorRestaItem28;
+                            gCamItem28.gValorItem = gValorItem28;
+                            gCamItem28.gCamIVA = gCamIVA28;
+                            gCamItem1[f] = gCamItem28;
+                        }
+                        if (f == 28)
+                        {
+                            gCamItem29.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem29.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem29.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem29.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem29.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem29.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem29.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA29.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA29.dPropIVA = 100;
+                                        gCamIVA29.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA29.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA29.dPropIVA = 100;
+                                        gCamIVA29.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA29.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA29.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA29.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA29.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA29.dPropIVA = 100;
+                                        gCamIVA29.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA29.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA29.iAfecIVA = "3";
+                                gCamIVA29.dBasGravIVA = 0;
+                                gCamIVA29.dLiqIVAItem = 0;
+                            }
+                            gCamIVA29.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem29.gValorRestaItem = gValorRestaItem29;
+                            gCamItem29.gValorItem = gValorItem29;
+                            gCamItem29.gCamIVA = gCamIVA29;
+                            gCamItem1[f] = gCamItem29;
+                        }
+                        if (f == 29)
+                        {
+                            gCamItem30.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem30.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem30.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem30.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem30.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem30.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem30.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA30.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA30.dPropIVA = 100;
+                                        gCamIVA30.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA30.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA30.dPropIVA = 100;
+                                        gCamIVA30.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA30.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA30.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA30.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA30.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA30.dPropIVA = 100;
+                                        gCamIVA30.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA30.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA30.iAfecIVA = "3";
+                                gCamIVA30.dBasGravIVA = 0;
+                                gCamIVA30.dLiqIVAItem = 0;
+                            }
+                            gCamIVA30.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem30.gValorRestaItem = gValorRestaItem30;
+                            gCamItem30.gValorItem = gValorItem30;
+                            gCamItem30.gCamIVA = gCamIVA30;
+                            gCamItem1[f] = gCamItem30;
+                        }
+                        if (f == 30)
+                        {
+                            gCamItem31.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem31.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem31.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem31.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem31.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem31.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem31.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA31.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA31.dPropIVA = 100;
+                                        gCamIVA31.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA31.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA31.dPropIVA = 100;
+                                        gCamIVA31.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA31.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA31.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA31.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA31.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA31.dPropIVA = 100;
+                                        gCamIVA31.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA31.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA31.iAfecIVA = "3";
+                                gCamIVA31.dBasGravIVA = 0;
+                                gCamIVA31.dLiqIVAItem = 0;
+                            }
+                            gCamIVA31.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem31.gValorRestaItem = gValorRestaItem31;
+                            gCamItem31.gValorItem = gValorItem31;
+                            gCamItem31.gCamIVA = gCamIVA31;
+                            gCamItem1[f] = gCamItem31;
+                        }
+                        if (f == 31)
+                        {
+                            gCamItem32.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem32.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem32.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem32.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem32.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem32.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem32.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA32.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA32.dPropIVA = 100;
+                                        gCamIVA32.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA32.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA32.dPropIVA = 100;
+                                        gCamIVA32.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA32.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA32.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA32.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA32.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA32.dPropIVA = 100;
+                                        gCamIVA32.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA32.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA32.iAfecIVA = "3";
+                                gCamIVA32.dBasGravIVA = 0;
+                                gCamIVA32.dLiqIVAItem = 0;
+                            }
+                            gCamIVA32.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem32.gValorRestaItem = gValorRestaItem32;
+                            gCamItem32.gValorItem = gValorItem32;
+                            gCamItem32.gCamIVA = gCamIVA32;
+                            gCamItem1[f] = gCamItem32;
+                        }
+                        if (f == 32)
+                        {
+                            gCamItem33.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem33.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem33.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem33.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem33.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem33.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem33.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA33.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA33.dPropIVA = 100;
+                                        gCamIVA33.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA33.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA33.dPropIVA = 100;
+                                        gCamIVA33.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA33.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA33.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA33.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA33.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA33.dPropIVA = 100;
+                                        gCamIVA33.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA33.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA33.iAfecIVA = "3";
+                                gCamIVA33.dBasGravIVA = 0;
+                                gCamIVA33.dLiqIVAItem = 0;
+                            }
+                            gCamIVA33.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem33.gValorRestaItem = gValorRestaItem33;
+                            gCamItem33.gValorItem = gValorItem33;
+                            gCamItem33.gCamIVA = gCamIVA33;
+                            gCamItem1[f] = gCamItem33;
+                        }
+                        if (f == 33)
+                        {
+                            gCamItem34.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem34.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem34.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem34.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem34.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem34.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem34.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA34.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA34.dPropIVA = 100;
+                                        gCamIVA34.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA34.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA34.dPropIVA = 100;
+                                        gCamIVA34.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA34.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA34.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA34.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA34.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA34.dPropIVA = 100;
+                                        gCamIVA34.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA34.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA34.iAfecIVA = "3";
+                                gCamIVA34.dBasGravIVA = 0;
+                                gCamIVA34.dLiqIVAItem = 0;
+                            }
+                            gCamIVA34.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem34.gValorRestaItem = gValorRestaItem34;
+                            gCamItem34.gValorItem = gValorItem34;
+                            gCamItem34.gCamIVA = gCamIVA34;
+                            gCamItem1[f] = gCamItem34;
+                        }
+                        if (f == 34)
+                        {
+                            gCamItem35.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem35.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem35.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem35.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem35.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem35.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem35.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA35.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA35.dPropIVA = 100;
+                                        gCamIVA35.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA35.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA35.dPropIVA = 100;
+                                        gCamIVA35.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA35.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA35.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA35.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA35.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA35.dPropIVA = 100;
+                                        gCamIVA35.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA35.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA35.iAfecIVA = "3";
+                                gCamIVA35.dBasGravIVA = 0;
+                                gCamIVA35.dLiqIVAItem = 0;
+                            }
+                            gCamIVA35.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem35.gValorRestaItem = gValorRestaItem35;
+                            gCamItem35.gValorItem = gValorItem35;
+                            gCamItem35.gCamIVA = gCamIVA35;
+                            gCamItem1[f] = gCamItem35;
+                        }
+                        if (f == 35)
+                        {
+                            gCamItem36.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem36.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem36.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem36.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem36.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem36.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem36.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA36.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA36.dPropIVA = 100;
+                                        gCamIVA36.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA36.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA36.dPropIVA = 100;
+                                        gCamIVA36.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA36.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA36.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA36.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA36.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA36.dPropIVA = 100;
+                                        gCamIVA36.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA36.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA36.iAfecIVA = "3";
+                                gCamIVA36.dBasGravIVA = 0;
+                                gCamIVA36.dLiqIVAItem = 0;
+                            }
+                            gCamIVA36.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem36.gValorRestaItem = gValorRestaItem36;
+                            gCamItem36.gValorItem = gValorItem36;
+                            gCamItem36.gCamIVA = gCamIVA36;
+                            gCamItem1[f] = gCamItem36;
+                        }
+                        if (f == 36)
+                        {
+                            gCamItem37.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem37.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem37.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem37.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem37.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem37.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem37.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA37.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA37.dPropIVA = 100;
+                                        gCamIVA37.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA37.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA37.dPropIVA = 100;
+                                        gCamIVA37.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA37.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA37.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA37.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA37.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA37.dPropIVA = 100;
+                                        gCamIVA37.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA37.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA37.iAfecIVA = "3";
+                                gCamIVA37.dBasGravIVA = 0;
+                                gCamIVA37.dLiqIVAItem = 0;
+                            }
+                            gCamIVA37.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem37.gValorRestaItem = gValorRestaItem37;
+                            gCamItem37.gValorItem = gValorItem37;
+                            gCamItem37.gCamIVA = gCamIVA37;
+                            gCamItem1[f] = gCamItem37;
+                        }
+                        if (f == 37)
+                        {
+                            gCamItem38.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem38.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem38.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem38.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem38.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem38.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem38.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA38.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA38.dPropIVA = 100;
+                                        gCamIVA38.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA38.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA38.dPropIVA = 100;
+                                        gCamIVA38.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA38.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA38.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA38.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA38.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA38.dPropIVA = 100;
+                                        gCamIVA38.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA38.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA38.iAfecIVA = "3";
+                                gCamIVA38.dBasGravIVA = 0;
+                                gCamIVA38.dLiqIVAItem = 0;
+                            }
+                            gCamIVA38.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem38.gValorRestaItem = gValorRestaItem38;
+                            gCamItem38.gValorItem = gValorItem38;
+                            gCamItem38.gCamIVA = gCamIVA38;
+                            gCamItem1[f] = gCamItem38;
+                        }
+                        if (f == 38)
+                        {
+                            gCamItem39.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem39.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem39.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem39.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem39.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem39.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem39.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA39.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA39.dPropIVA = 100;
+                                        gCamIVA39.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA39.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA39.dPropIVA = 100;
+                                        gCamIVA39.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA39.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA39.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA39.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA39.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA39.dPropIVA = 100;
+                                        gCamIVA39.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA39.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA39.iAfecIVA = "3";
+                                gCamIVA39.dBasGravIVA = 0;
+                                gCamIVA39.dLiqIVAItem = 0;
+                            }
+                            gCamIVA36.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem39.gValorRestaItem = gValorRestaItem39;
+                            gCamItem39.gValorItem = gValorItem39;
+                            gCamItem39.gCamIVA = gCamIVA39;
+                            gCamItem1[f] = gCamItem39;
+                        }
+                        if (f == 39)
+                        {
+                            gCamItem40.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem40.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem40.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem40.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem40.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem40.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem40.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA40.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA40.dPropIVA = 100;
+                                        gCamIVA40.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA40.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA40.dPropIVA = 100;
+                                        gCamIVA40.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA40.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA40.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA40.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA40.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA40.dPropIVA = 100;
+                                        gCamIVA40.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA40.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA40.iAfecIVA = "3";
+                                gCamIVA40.dBasGravIVA = 0;
+                                gCamIVA40.dLiqIVAItem = 0;
+                            }
+                            gCamIVA40.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem40.gValorRestaItem = gValorRestaItem40;
+                            gCamItem40.gValorItem = gValorItem40;
+                            gCamItem40.gCamIVA = gCamIVA40;
+                            gCamItem1[f] = gCamItem40;
+                        }
+                        if (f == 40)
+                        {
+                            gCamItem41.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem41.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem41.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem41.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem41.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem41.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem41.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA41.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA41.dPropIVA = 100;
+                                        gCamIVA41.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA41.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA41.dPropIVA = 100;
+                                        gCamIVA41.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA41.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA41.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA41.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA41.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA41.dPropIVA = 100;
+                                        gCamIVA41.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA41.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA41.iAfecIVA = "3";
+                                gCamIVA41.dBasGravIVA = 0;
+                                gCamIVA41.dLiqIVAItem = 0;
+                            }
+                            gCamIVA41.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem41.gValorRestaItem = gValorRestaItem41;
+                            gCamItem41.gValorItem = gValorItem41;
+                            gCamItem41.gCamIVA = gCamIVA41;
+                            gCamItem1[f] = gCamItem41;
+                        }
+                        if (f == 41)
+                        {
+                            gCamItem42.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem42.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem42.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem42.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem42.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem42.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem42.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA42.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA42.dPropIVA = 100;
+                                        gCamIVA42.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA42.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA42.dPropIVA = 100;
+                                        gCamIVA42.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA42.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA42.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA42.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA42.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA42.dPropIVA = 100;
+                                        gCamIVA42.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA42.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA42.iAfecIVA = "3";
+                                gCamIVA42.dBasGravIVA = 0;
+                                gCamIVA42.dLiqIVAItem = 0;
+                            }
+                            gCamIVA42.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem42.gValorRestaItem = gValorRestaItem42;
+                            gCamItem42.gValorItem = gValorItem42;
+                            gCamItem42.gCamIVA = gCamIVA42;
+                            gCamItem1[f] = gCamItem42;
+                        }
+                        if (f == 42)
+                        {
+                            gCamItem43.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem43.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem43.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem43.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem43.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem43.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem43.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA43.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA43.dPropIVA = 100;
+                                        gCamIVA43.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA43.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA43.dPropIVA = 100;
+                                        gCamIVA43.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA43.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA43.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA43.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA43.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA43.dPropIVA = 100;
+                                        gCamIVA43.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA43.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA43.iAfecIVA = "3";
+                                gCamIVA43.dBasGravIVA = 0;
+                                gCamIVA43.dLiqIVAItem = 0;
+                            }
+                            gCamIVA43.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem43.gValorRestaItem = gValorRestaItem43;
+                            gCamItem43.gValorItem = gValorItem43;
+                            gCamItem43.gCamIVA = gCamIVA43;
+                            gCamItem1[f] = gCamItem43;
+                        }
+                        if (f == 43)
+                        {
+                            gCamItem44.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem44.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem44.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem44.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem44.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem44.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem44.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA44.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA44.dPropIVA = 100;
+                                        gCamIVA44.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA44.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA44.dPropIVA = 100;
+                                        gCamIVA44.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA44.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA44.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA44.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA44.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA44.dPropIVA = 100;
+                                        gCamIVA44.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA44.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA44.iAfecIVA = "3";
+                                gCamIVA44.dBasGravIVA = 0;
+                                gCamIVA44.dLiqIVAItem = 0;
+                            }
+                            gCamIVA44.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem44.gValorRestaItem = gValorRestaItem44;
+                            gCamItem44.gValorItem = gValorItem44;
+                            gCamItem44.gCamIVA = gCamIVA44;
+                            gCamItem1[f] = gCamItem44;
+                        }
+                        if (f == 44)
+                        {
+                            gCamItem45.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem45.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem45.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                                                                                                             //gValorItem
+                            gValorItem45.dPUniProSer = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()); //11364;
+                            gValorItem45.dTotBruOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gValorRestaItem
+                            gValorRestaItem45.dDescItem = 0;
+                            //gValorRestaItem.dAntPreUniIt = 0;
+                            //gValorRestaItem.dTotOpeItem = 0;  
+                            gValorRestaItem45.dTotOpeItem = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            //gCamIVA
+                            string IVA = oDatos.Fields.Item(15).Value.ToString();
+                            if (IVA.Equals("5") || IVA.Equals("10"))
+                            {
+                                gCamIVA45.iAfecIVA = "1";
+                                if (IVA.Equals("10"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA45.dPropIVA = 100;
+                                        gCamIVA45.dBasGravIVA = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                        gCamIVA45.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA45.dPropIVA = 100;
+                                        gCamIVA45.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1");
+                                        gCamIVA45.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,1"));
+                                    }
+
+                                }
+                                if (IVA.Equals("5"))
+                                {
+                                    if (oDatos.Fields.Item(8).Value.ToString() == "PYG")
+                                    {
+                                        gCamIVA45.dPropIVA = 100;
+                                        decimal valor = decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                                        gCamIVA45.dBasGravIVA = Math.Round(valor / decimal.Parse("1,05"));
+                                        gCamIVA45.dLiqIVAItem = Math.Round((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05")));
+                                    }
+                                    else
+                                    {
+                                        gCamIVA45.dPropIVA = 100;
+                                        gCamIVA45.dBasGravIVA = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05");
+                                        gCamIVA45.dLiqIVAItem = (decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) - ((decimal.Parse(oDatos.Fields.Item(14).Value.ToString()) * decimal.Parse(oDatos.Fields.Item(13).Value.ToString())) / decimal.Parse("1,05"));
+                                    }
+
+                                }
+
+                            }
+                            else if (IVA.Equals("0"))
+                            {
+                                gCamIVA45.iAfecIVA = "3";
+                                gCamIVA45.dBasGravIVA = 0;
+                                gCamIVA45.dLiqIVAItem = 0;
+                            }
+                            gCamIVA45.dTasaIVA = oDatos.Fields.Item(15).Value.ToString(); //"10";
+
+                            gValorItem45.gValorRestaItem = gValorRestaItem45;
+                            gCamItem45.gValorItem = gValorItem45;
+                            gCamItem45.gCamIVA = gCamIVA45;
+                            gCamItem1[f] = gCamItem45;
+                        }
+                        #endregion
+
+
+                        f++;
+                        oDatos.MoveNext();
+                        if (false == oCompany.InTransaction)
+                        {
+                            oCompany.StartTransaction();
+                        }
+                    }
+                    //conexion
+                    if (false == oCompany.InTransaction)
+                    {
+                        oCompany.StartTransaction();
+                    }
+                    //los parámetro de procesamientos
+                    parametros.retornarKuDE = true;
+                    parametros.retornarXmlFirmado = true;
+                    if (tablacab.Equals("OINV"))
+                    {
+                        if (string.IsNullOrEmpty(trans))
+                        {
+                            parametros.templateKuDE = "FACTURA_SIMPLE";
+                        }
+                        else
+                        {
+                            parametros.templateKuDE = template;
+                        }
                     }
                     else
                     {
                         parametros.templateKuDE = template;
                     }
-                }
-                else
-                {
-                    parametros.templateKuDE = template;
-                }
 
-                parametros.cicloFacturacion = fe.ToString("yyyy-MM-dd");
-                //mandamos los sub ojetos a los objetos principales
-                if (tablacab.Equals("OINV"))
-                {
-                    gDtipDE.gCamFE = gCamFE;
-                    gDtipDE.gCamCond = gCamCond;
-                }
-
-                DE.gOpeDE = gOpeDE;
-                DE.gTimb = gTimb;
-                DE.gDatGralOpe = gDatGralOpe;
-                DE.gDatGralOpe.gOpeCom = gOpeCom;
-                DE.gDatGralOpe.gEmis = gEmis;
-                DE.gDatGralOpe.gDatRec = gDatRec;
-                DE.gDtipDE = gDtipDE;
-
-                gCamEsp.gGrupSup = gGrupSup;
-                if (condicion.Equals("2") && tablacab.Equals("OINV"))
-                {
-                    gCamCond.gPagCred = gPagCred;
-
-                }
-                if (tablacab.Equals("ORIN") && electronico.Equals("Si"))
-                {
-
-                    //consultamos por el documento asociado
-                    Recordset DocAsoc;
-                    DocAsoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    //DocAsoc.DoQuery("SELECT T2.\"U_CDC\" FROM ORIN T0 INNER JOIN RIN1 T1 ON T0.\"DocEntry\"=t1.\"DocEntry\" INNER JOIN OINV T2 ON T1.\"BaseEntry\"=t2.\"DocEntry\" WHERE T0.\"DocEntry\"='" + Entry + "'");
-                    DocAsoc.DoQuery("SELECT T0.\"U_CDC\" FROM  OINV T0  WHERE T0.\"DocNum\"='" + DocNum + "'");
-                    while (!DocAsoc.EoF)
+                    parametros.cicloFacturacion = fe.ToString("yyyy-MM-dd");
+                    //mandamos los sub ojetos a los objetos principales
+                    if (tablacab.Equals("OINV"))
                     {
-                        gDtipDE.gCamNCDE = gCamNCDE;
-                        DE.gCamDEAsoc = gCamDEAsoc1;
-                        gCamDEAsoc1[0] = gCamDEAsoc;
-                        gCamDEAsoc.iTipDocAso = "1";
-                        gCamDEAsoc.dCdCDERef = DocAsoc.Fields.Item(0).Value.ToString();
-                        DocAsoc.MoveNext();
-                    }
-                }
-                if (tablacab.Equals("ORIN") && electronico.Equals("No"))
-                {
-                    //consultamos por el documento asociado
-                    Recordset DocAsoc;
-                    DocAsoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    // DocAsoc.DoQuery("SELECT T1.\"U_TIMB\",T1.\"U_ESTA\",T1.\"U_PEMI\",T1.\"FolioNum\",T1.\"DocDate\" FROM RIN1 T0 LEFT JOIN OINV T1 ON T1.\"DocEntry\"=T0.\"BaseEntry\" WHERE T0.\"DocEntry\"='" + Entry + "'");
-                    DocAsoc.DoQuery("SELECT T0.\"U_TIMB\",T0.\"U_ESTA\",T0.\"U_PEMI\",T0.\"FolioNum\",T0.\"DocDate\", " +
-                                    "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\" " +
-                                    "FROM  OINV T0  WHERE T0.\"DocNum\"='" + DocNum + "'");
-                    while (!DocAsoc.EoF)
-                    {
-                        gDtipDE.gCamNCDE = gCamNCDE;
-                        DE.gCamDEAsoc = gCamDEAsoc1;
-                        gCamDEAsoc1[0] = gCamDEAsoc;
-                        gCamDEAsoc.iTipDocAso = "2";
-                        gCamDEAsoc.dNTimDI = DocAsoc.Fields.Item(0).Value.ToString();//timbrado
-                        gCamDEAsoc.dEstDocAso = DocAsoc.Fields.Item(1).Value.ToString();//establecimiento
-                        gCamDEAsoc.dPExpDocAso = DocAsoc.Fields.Item(2).Value.ToString();//punto de expedicion
-                        gCamDEAsoc.dNumDocAso = DocAsoc.Fields.Item(3).Value.ToString(); ;//folio
-                        gCamDEAsoc.iTipoDocAso = "1";//factura
-                        DateTime FechaDA = DateTime.Parse(DocAsoc.Fields.Item(4).Value.ToString());
-                        string hora2 = DocAsoc.Fields.Item(5).Value.ToString();
-                        string DAfecha = FechaDA.ToString("yyyy-MM-dd");//fecha de la factura YYYY-mm-DD
-                        gCamDEAsoc.dFecEmiDI = DateTime.Parse(DAfecha);
-                        gCamDEAsoc.dFecEmiDISpecified = true;
-                        DocAsoc.MoveNext();
-
+                        gDtipDE.gCamFE = gCamFE;
+                        gDtipDE.gCamCond = gCamCond;
                     }
 
+                    DE.gOpeDE = gOpeDE;
+                    DE.gTimb = gTimb;
+                    DE.gDatGralOpe = gDatGralOpe;
+                    DE.gDatGralOpe.gOpeCom = gOpeCom;
+                    DE.gDatGralOpe.gEmis = gEmis;
+                    DE.gDatGralOpe.gDatRec = gDatRec;
+                    DE.gDtipDE = gDtipDE;
 
-                }
-
-
-
-                gCamCond.gPaConEIni = gPaConEIni1;
-                //gDtipDE.gCamCond = gCamCond;
-                gDtipDE.gCamItem = gCamItem1;
-                //gValorItem.gValorRestaItem = gValorRestaItem;
-                //gCamItem.gValorItem = gValorItem;
-                //gCamItem.gCamIVA = gCamIVA;
-                rDE.DE = DE;
-                procesarDocumento.rDE = rDE;
-                procesarDocumento.parametrosProcesamiento = parametros;
-                procesarDocumento2[0] = procesarDocumento;
-                procesarFactura.procesarDocumento = procesarDocumento2;
-                //procesamos el documento
-
-                resultadoProcesamiento = cliente.procesarLotePorFactura(procesarFactura);
-                //obtenemos el resultado
-                documentoElectronicoGenerado = resultadoProcesamiento[0].documentoElectronicoGenerado;
-                dynamic resultadoOK = resultadoProcesamiento[0].ok;
-                //consultamos si el resultado fue TRUE O FALSE
-                if (resultadoOK == false)
-                {
-                    if (true == oCompany.InTransaction)
+                    gCamEsp.gGrupSup = gGrupSup;
+                    if (condicion.Equals("2") && tablacab.Equals("OINV"))
                     {
-                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        gCamCond.gPagCred = gPagCred;
+
                     }
-                    string mensajeError = resultadoProcesamiento[0].mensajeError.ToString();
-                    string numDocError = resultadoProcesamiento[0].numDocumentoError.ToString();
-                    //proceso para grabar en sap
-                    Recordset oACtualizarDoc;
-                    oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_MensajeError\"='" + mensajeError.Replace("'", "") + "',\"U_ESTADO\"='NO PROCESADO',\"U_FechaT\"='" + fecha + "' where \"DocNum\"='" + codigo + "'");
-                    //MessageBox.Show("Factura creada pero no procesada", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    SBO_Application.SetStatusBarMessage("Documento creado con error de la SET!!", SAPbouiCOM.BoMessageTime.bmt_Short, true);
-                }
-                else
-                {
-                    if (true == oCompany.InTransaction)
+                    if (tablacab.Equals("ORIN") && electronico.Equals("Si"))
                     {
-                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    }
-                    //actualizamos el folio de la factura
-                    Recordset oActFolio;
-                    oActFolio = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActFolio.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "',\"U_TIMB\"='" + timbrado + "' where \"DocNum\"='" + codigo + "'");
-                    //actualizamos el folio del asiento
-                    Recordset oActAsiento;
-                    oActAsiento = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActAsiento.DoQuery("UPDATE OJDT SET \"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "' where \"BaseRef\"='" + codigo + "' AND \"TransId\"='" + transId + "'");
 
-                    //actualizamos la numeracion de la serie           
-                    Recordset oActSerie;
-                    oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"='" + NumSerie + "'");
-
-                    dynamic kude = documentoElectronicoGenerado[0].kuDE;
-                    string Kude64 = Convert.ToBase64String(kude);
-                    dynamic xmlfirmado = documentoElectronicoGenerado[0].xmlFirmado;
-                    string xmlfirmado64 = Convert.ToBase64String(xmlfirmado);
-                    //extraemos el CDC del XML
-                    dynamic json = Encoding.UTF8.GetString(xmlfirmado);
-                    string[] indice = json.Split('>');
-                    int c = 0;
-                    string cdc = null;
-                    //string QR = null;
-                    foreach (string indice2 in indice)
-                    {
-                        if (c == 3)
+                        //consultamos por el documento asociado
+                        Recordset DocAsoc;
+                        DocAsoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        //DocAsoc.DoQuery("SELECT T2.\"U_CDC\" FROM ORIN T0 INNER JOIN RIN1 T1 ON T0.\"DocEntry\"=t1.\"DocEntry\" INNER JOIN OINV T2 ON T1.\"BaseEntry\"=t2.\"DocEntry\" WHERE T0.\"DocEntry\"='" + Entry + "'");
+                        DocAsoc.DoQuery("SELECT T0.\"U_CDC\" FROM  OINV T0  WHERE T0.\"DocNum\"='" + DocNum + "'");
+                        while (!DocAsoc.EoF)
                         {
-                            cdc = indice2.Replace("<DE Id=", "").Replace("\"", "").Replace(@"""", "");
+                            gDtipDE.gCamNCDE = gCamNCDE;
+                            DE.gCamDEAsoc = gCamDEAsoc1;
+                            gCamDEAsoc1[0] = gCamDEAsoc;
+                            gCamDEAsoc.iTipDocAso = "1";
+                            gCamDEAsoc.dCdCDERef = DocAsoc.Fields.Item(0).Value.ToString();
+                            DocAsoc.MoveNext();
                         }
-                        //if (c == 278)
-                        //{
-                        //    QR = indice2.Replace("</dCarQR", "");
-                        //}
-                        c++;
                     }
-                    string id = documentoElectronicoGenerado[0].id;
-                    //extraemos el QR del XML
-                    string pp = Encoding.UTF8.GetString(xmlfirmado);
-                    int ind1 = pp.IndexOf("<dCarQR>") + "<dCarQR>".Length;
-                    int ind2 = pp.IndexOf("</dCarQR>");
-                    int carateres = ind2 - ind1;
-                    string QR = pp.Substring(ind1, carateres);
+                    if (tablacab.Equals("ORIN") && electronico.Equals("No"))
+                    {
+                        //consultamos por el documento asociado
+                        Recordset DocAsoc;
+                        DocAsoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        // DocAsoc.DoQuery("SELECT T1.\"U_TIMB\",T1.\"U_ESTA\",T1.\"U_PEMI\",T1.\"FolioNum\",T1.\"DocDate\" FROM RIN1 T0 LEFT JOIN OINV T1 ON T1.\"DocEntry\"=T0.\"BaseEntry\" WHERE T0.\"DocEntry\"='" + Entry + "'");
+                        DocAsoc.DoQuery("SELECT T0.\"U_TIMB\",T0.\"U_ESTA\",T0.\"U_PEMI\",T0.\"FolioNum\",T0.\"DocDate\", " +
+                                        "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN '0'||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\" " +
+                                        "FROM  OINV T0  WHERE T0.\"DocNum\"='" + DocNum + "'");
+                        while (!DocAsoc.EoF)
+                        {
+                            gDtipDE.gCamNCDE = gCamNCDE;
+                            DE.gCamDEAsoc = gCamDEAsoc1;
+                            gCamDEAsoc1[0] = gCamDEAsoc;
+                            gCamDEAsoc.iTipDocAso = "2";
+                            gCamDEAsoc.dNTimDI = DocAsoc.Fields.Item(0).Value.ToString();//timbrado
+                            gCamDEAsoc.dEstDocAso = DocAsoc.Fields.Item(1).Value.ToString();//establecimiento
+                            gCamDEAsoc.dPExpDocAso = DocAsoc.Fields.Item(2).Value.ToString();//punto de expedicion
+                            gCamDEAsoc.dNumDocAso = DocAsoc.Fields.Item(3).Value.ToString(); ;//folio
+                            gCamDEAsoc.iTipoDocAso = "1";//factura
+                            DateTime FechaDA = DateTime.Parse(DocAsoc.Fields.Item(4).Value.ToString());
+                            string hora2 = DocAsoc.Fields.Item(5).Value.ToString();
+                            string DAfecha = FechaDA.ToString("yyyy-MM-dd");//fecha de la factura YYYY-mm-DD
+                            gCamDEAsoc.dFecEmiDI = DateTime.Parse(DAfecha);
+                            gCamDEAsoc.dFecEmiDISpecified = true;
+                            DocAsoc.MoveNext();
 
-                    //proceso para grabar en sap
-                    Recordset oACtualizarDoc;
-                    oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_KUDE\"='" + Kude64 + "',\"U_XMLFIRMADO\"='" + xmlfirmado64 + "',\"U_ID\"='" + id + "',\"U_ESTADO\"='PROCESADO',\"U_CDC\"='" + cdc + "',\"U_FechaT\"='" + fecha + "',\"U_CODIGOQR\"='" + QR + "'  where \"DocNum\"='" + codigo + "'");//
-                                                                                                                                                                                                                                                                                                                 //MessageBox.Show("Documento creada con exito","",MessageBoxButtons.OK,MessageBoxIcon.Information);
-                    SBO_Application.StatusBar.SetText("Documento creado con exito!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
-                    //SBO_Application.SetStatusBarMessage("Documento creado con Exito!!", SAPbouiCOM.BoMessageTime.bmt_Short, false);
+                        }
 
+
+                    }
+
+
+
+                    gCamCond.gPaConEIni = gPaConEIni1;
+                    //gDtipDE.gCamCond = gCamCond;
+                    gDtipDE.gCamItem = gCamItem1;
+                    //gValorItem.gValorRestaItem = gValorRestaItem;
+                    //gCamItem.gValorItem = gValorItem;
+                    //gCamItem.gCamIVA = gCamIVA;
+                    rDE.DE = DE;
+                    procesarDocumento.rDE = rDE;
+                    procesarDocumento.parametrosProcesamiento = parametros;
+                    procesarDocumento2[0] = procesarDocumento;
+                    procesarFactura.procesarDocumento = procesarDocumento2;
+                    //procesamos el documento
+
+                    resultadoProcesamiento = cliente.procesarLotePorFactura(procesarFactura);
+                    //obtenemos el resultado
+                    documentoElectronicoGenerado = resultadoProcesamiento[0].documentoElectronicoGenerado;
+                    dynamic resultadoOK = resultadoProcesamiento[0].ok;
+                    //consultamos si el resultado fue TRUE O FALSE
+                    if (resultadoOK == false)
+                    {
+                        if (true == oCompany.InTransaction)
+                        {
+                            oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        }
+                        string mensajeError = resultadoProcesamiento[0].mensajeError.ToString();
+                        string numDocError = resultadoProcesamiento[0].numDocumentoError.ToString();
+                        //proceso para grabar en sap
+                        Recordset oACtualizarDoc;
+                        oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_MensajeError\"='" + mensajeError.Replace("'", "") + "',\"U_ESTADO\"='NO PROCESADO',\"U_FechaT\"='" + fecha + "' where \"DocNum\"='" + codigo + "'");
+                        //MessageBox.Show("Factura creada pero no procesada", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        SBO_Application.SetStatusBarMessage("Documento creado con error de la SET!!", SAPbouiCOM.BoMessageTime.bmt_Short, true);
+                    }
+                    else
+                    {
+                        if (true == oCompany.InTransaction)
+                        {
+                            oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        }
+                        //actualizamos el folio de la factura
+                        Recordset oActFolio;
+                        oActFolio = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActFolio.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "',\"U_TIMB\"='" + timbrado + "' where \"DocNum\"='" + codigo + "'");
+                        //actualizamos el folio del asiento
+                        Recordset oActAsiento;
+                        oActAsiento = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActAsiento.DoQuery("UPDATE OJDT SET \"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "' where \"BaseRef\"='" + codigo + "' AND \"TransId\"='" + transId + "'");
+
+                        //actualizamos la numeracion de la serie           
+                        Recordset oActSerie;
+                        oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"='" + NumSerie + "'");
+
+                        dynamic kude = documentoElectronicoGenerado[0].kuDE;
+                        string Kude64 = Convert.ToBase64String(kude);
+                        dynamic xmlfirmado = documentoElectronicoGenerado[0].xmlFirmado;
+                        string xmlfirmado64 = Convert.ToBase64String(xmlfirmado);
+                        //extraemos el CDC del XML
+                        dynamic json = Encoding.UTF8.GetString(xmlfirmado);
+                        string[] indice = json.Split('>');
+                        int c = 0;
+                        string cdc = null;
+                        //string QR = null;
+                        foreach (string indice2 in indice)
+                        {
+                            if (c == 3)
+                            {
+                                cdc = indice2.Replace("<DE Id=", "").Replace("\"", "").Replace(@"""", "");
+                            }
+                            //if (c == 278)
+                            //{
+                            //    QR = indice2.Replace("</dCarQR", "");
+                            //}
+                            c++;
+                        }
+                        string id = documentoElectronicoGenerado[0].id;
+                        //extraemos el QR del XML
+                        string pp = Encoding.UTF8.GetString(xmlfirmado);
+                        int ind1 = pp.IndexOf("<dCarQR>") + "<dCarQR>".Length;
+                        int ind2 = pp.IndexOf("</dCarQR>");
+                        int carateres = ind2 - ind1;
+                        string QR = pp.Substring(ind1, carateres);
+
+                        //proceso para grabar en sap
+                        Recordset oACtualizarDoc;
+                        oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_KUDE\"='" + Kude64 + "',\"U_XMLFIRMADO\"='" + xmlfirmado64 + "',\"U_ID\"='" + id + "',\"U_ESTADO\"='PROCESADO',\"U_CDC\"='" + cdc + "',\"U_FechaT\"='" + fecha + "',\"U_CODIGOQR\"='" + QR + "'  where \"DocNum\"='" + codigo + "'");//
+                                                                                                                                                                                                                                                                                                                     //MessageBox.Show("Documento creada con exito","",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                        SBO_Application.StatusBar.SetText("Documento creado con exito!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
+                        //SBO_Application.SetStatusBarMessage("Documento creado con Exito!!", SAPbouiCOM.BoMessageTime.bmt_Short, false);
+
+                    }                   
                 }
+                b_doc = false;
             }
             catch (Exception e)
             {
@@ -8332,48 +8341,50 @@ namespace BOTONSAP
         {
             try
             {
-                if (false == oCompany.InTransaction)
+                if (b_doc == true)
                 {
-                    oCompany.StartTransaction();
-                }
-                //buscamos el establecimeinto y punto de exp correspondiente
-                SAPbobsCOM.Recordset oSeriesDatos;
-                oSeriesDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oSeriesDatos.DoQuery("SELECT T1.\"BeginStr\",T1.\"EndStr\" FROM " + tablacab + " T0 INNER JOIN NNM1 T1 ON T0.\"Series\"=T1.\"Series\" WHERE T0.\"DocNum\"='" + codigo + "'");
-                //procedemos a actualizar el documento
-                SAPbobsCOM.Recordset oDocAct;
-                oDocAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oDocAct.DoQuery("UPDATE " + tablacab + " SET \"U_PEMI\"='" + oSeriesDatos.Fields.Item(1).Value.ToString() + "',\"U_ESTA\"='" + oSeriesDatos.Fields.Item(0).Value.ToString() + "' WHERE \"DocNum\"='" + codigo + "' ");
-
-                Recordset oDire;
-                oDire = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oDire.DoQuery("select \"PayToCode\",\"ShipToCode\" from " + tablacab + " where \"DocNum\"='" + codigo + "'");
-                string direPay = oDire.Fields.Item(0).Value.ToString();
-                string direShip = oDire.Fields.Item(1).Value.ToString();
-
-                Recordset oDireTras;
-                oDireTras = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                string direTras = null;
-                if (tablacab.Equals("OWTR"))
-                {
-                    oDireTras.DoQuery("SELECT T2.\"Address\" FROM OWTR T0 LEFT JOIN OCRD T1 ON T1.\"CardCode\"=T0.\"CardCode\" " +
-                                      "LEFT JOIN CRD1 T2 ON T2.\"CardCode\"=T1.\"CardCode\" AND T2.\"AdresType\"='B' WHERE T0.\"DocNum\"='" + codigo + "'");
-                    direTras = oDireTras.Fields.Item(0).Value.ToString();
-                    if (string.IsNullOrEmpty(direTras))
+                    if (false == oCompany.InTransaction)
                     {
-                        SBO_Application.StatusBar.SetText("Cargar direccion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        oCompany.StartTransaction();
                     }
-                }
-                //proceso para mandar documento
-                //consultamos los datos del documento              
-                Recordset oDatos;
-                oDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    //buscamos el establecimeinto y punto de exp correspondiente
+                    SAPbobsCOM.Recordset oSeriesDatos;
+                    oSeriesDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oSeriesDatos.DoQuery("SELECT T1.\"BeginStr\",T1.\"EndStr\" FROM " + tablacab + " T0 INNER JOIN NNM1 T1 ON T0.\"Series\"=T1.\"Series\" WHERE T0.\"DocNum\"='" + codigo + "'");
+                    //procedemos a actualizar el documento
+                    SAPbobsCOM.Recordset oDocAct;
+                    oDocAct = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oDocAct.DoQuery("UPDATE " + tablacab + " SET \"U_PEMI\"='" + oSeriesDatos.Fields.Item(1).Value.ToString() + "',\"U_ESTA\"='" + oSeriesDatos.Fields.Item(0).Value.ToString() + "' WHERE \"DocNum\"='" + codigo + "' ");
 
-                #region QUERY REMISION
-                if (tablacab.Equals("OWTR"))
-                {                   
-                    //GRANUSA                  
+                    Recordset oDire;
+                    oDire = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oDire.DoQuery("select \"PayToCode\",\"ShipToCode\" from " + tablacab + " where \"DocNum\"='" + codigo + "'");
+                    string direPay = oDire.Fields.Item(0).Value.ToString();
+                    string direShip = oDire.Fields.Item(1).Value.ToString();
+
+                    Recordset oDireTras;
+                    oDireTras = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    string direTras = null;
+                    if (tablacab.Equals("OWTR"))
+                    {
+                        oDireTras.DoQuery("SELECT T2.\"Address\" FROM OWTR T0 LEFT JOIN OCRD T1 ON T1.\"CardCode\"=T0.\"CardCode\" " +
+                                          "LEFT JOIN CRD1 T2 ON T2.\"CardCode\"=T1.\"CardCode\" AND T2.\"AdresType\"='B' WHERE T0.\"DocNum\"='" + codigo + "'");
+                        direTras = oDireTras.Fields.Item(0).Value.ToString();
+                        if (string.IsNullOrEmpty(direTras))
+                        {
+                            SBO_Application.StatusBar.SetText("Cargar direccion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                            oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        }
+                    }
+                    //proceso para mandar documento
+                    //consultamos los datos del documento              
+                    Recordset oDatos;
+                    oDatos = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+
+                    #region QUERY REMISION
+                    if (tablacab.Equals("OWTR"))
+                    {
+                        //GRANUSA                  
                         if (!string.IsNullOrEmpty(direTras))
                         {
                             oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",T0.\"Address\",CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
@@ -8441,1338 +8452,1340 @@ namespace BOTONSAP
                                   "WHERE T0.\"DocNum\"='" + codigo + "'");
                         }
 
-                    
-                }
-                else
-                {
-                    //consultamos la direccion que se eligio
-                    //if (!string.IsNullOrEmpty(direShip))
-                    //{                       
-                        
-                            //GRANUSA
-                            oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                                      "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
-                                      "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
-                                      "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
-                                      "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                                       "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
-                                       "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
-                                      "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\", " +
-                                      "CASE WHEN T11.\"U_CHAPA_CARRE\" is null THEN T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T0.\"U_TRANSPORTISTA\", " +
-                                      "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
-                                      "T13.\"Street\",T15.\"U_Direccion\", " +
-                                      "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                                      "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\",T2.\"E_Mail\" " +
-                                      "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
-                                      "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
-                                      "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
-                                      "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
-                                      "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
-                                      "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
-                                      "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
-                                      "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
-                                      "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                                      "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
-                                      "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
-                                      "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
-                                      "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
-                                      "LEFT JOIN \"@CHOFERES\" T15 ON T15.\"Code\"=T0.\"U_CHOFERES\" " +
-                                      //"LEFT JOIN OCPR T15 ON T15.\"CardCode\"=T0.\"U_TRANSPORTISTA\" and T15.\"Name\"=T0.\"U_CHOFERES\" " +
-                                      "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T0.\"U_ESTA\" " +
-                                      "WHERE T0.\"DocNum\"='" + codigo + "'");
-                        
-                    //}
-                    //else
-                    //{                                             
-                            //GRANUSA
-                            //oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
-                            //          "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
-                            //          "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
-                            //          "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
-                            //          "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
-                            //           "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
-                            //           "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
-                            //          "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\", " +
-                            //          "CASE WHEN T11.\"U_CHAPA_CARRE\" is null THEN T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T0.\"U_TRANSPORTISTA\", " +
-                            //          "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
-                            //          "T13.\"Street\",T15.\"U_Direccion\", " +
-                            //          "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
-                            //          "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
-                            //          "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
-                            //          "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"PayToCode\" " +
-                            //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
-                            //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
-                            //          "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
-                            //          "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
-                            //          "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
-                            //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
-                            //          "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
-                            //          "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
-                            //          "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
-                            //          "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
-                            //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
-                            //          "LEFT JOIN \"@CHOFERES\" T15 ON T15.\"Code\"=T0.\"U_CHOFERES\" " +
-                            //          //"LEFT JOIN OCPR T15 ON T15.\"CardCode\"=T0.\"U_TRANSPORTISTA\" and T15.\"Name\"=T0.\"U_CHOFERES\" " +
-                            //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T0.\"U_ESTA\" " +
-                            //          "WHERE T0.\"DocNum\"='" + codigo + "'");
-                        
-                    //}
-                }
 
-                #endregion
+                    }
+                    else
+                    {
+                        //consultamos la direccion que se eligio
+                        //if (!string.IsNullOrEmpty(direShip))
+                        //{                       
 
-                //validamos los campos obligatorios
-                #region VALIDACIONES
-                if (tablacab.Equals("ODLN"))
-                {
-                    if (string.IsNullOrEmpty(direPay))
-                    {
-                        if (string.IsNullOrEmpty(direShip))
-                        {
-                            SBO_Application.StatusBar.SetText("Cargar direccion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                            oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                            return;
-                        }
-                    }
-                }
+                        //GRANUSA
+                        oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
+                                  "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
+                                  "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
+                                  "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
+                                  "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                                   "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
+                                   "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
+                                  "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\", " +
+                                  "CASE WHEN T11.\"U_CHAPA_CARRE\" is null THEN T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T0.\"U_TRANSPORTISTA\", " +
+                                  "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
+                                  "T13.\"Street\",T15.\"U_Direccion\", " +
+                                  "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
+                                  "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\",T2.\"E_Mail\" " +
+                                  "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
+                                  "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"ShipToCode\" " +
+                                  "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
+                                  "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
+                                  "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
+                                  "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
+                                  "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
+                                  "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
+                                  "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
+                                  "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
+                                  "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
+                                  "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
+                                  "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
+                                  "LEFT JOIN \"@CHOFERES\" T15 ON T15.\"Code\"=T0.\"U_CHOFERES\" " +
+                                  //"LEFT JOIN OCPR T15 ON T15.\"CardCode\"=T0.\"U_TRANSPORTISTA\" and T15.\"Name\"=T0.\"U_CHOFERES\" " +
+                                  "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T0.\"U_ESTA\" " +
+                                  "WHERE T0.\"DocNum\"='" + codigo + "'");
 
-                string v_natu = oDatos.Fields.Item(26).Value.ToString();
-                if (string.IsNullOrEmpty(v_natu))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar naturaleza al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_ope = oDatos.Fields.Item(25).Value.ToString();
-                if (string.IsNullOrEmpty(v_ope) || v_ope.Equals("0"))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar tipo de operacion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_cont = oDatos.Fields.Item(27).Value.ToString();
-                if (string.IsNullOrEmpty(v_cont))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar tipo de contribuyente al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    return;
-                }
-                string v_direSal = oDatos.Fields.Item(39).Value.ToString();
-                if (string.IsNullOrEmpty(v_direSal))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar direccion del establecimiento", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_natTrans = oDatos.Fields.Item(32).Value.ToString();
-                if (string.IsNullOrEmpty(v_natTrans))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar naturaleza del transportista", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_direTrans = oDatos.Fields.Item(41).Value.ToString();
-                if (string.IsNullOrEmpty(v_direTrans))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar direccion del transportista", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_chof = oDatos.Fields.Item(37).Value.ToString();
-                if (string.IsNullOrEmpty(v_chof))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar un chofer a la remision", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_idchof = oDatos.Fields.Item(36).Value.ToString();
-                if (string.IsNullOrEmpty(v_idchof))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar cedula al chofer", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                string v_direChof = oDatos.Fields.Item(42).Value.ToString();
-                if (string.IsNullOrEmpty(v_direChof))
-                {
-                    SBO_Application.StatusBar.SetText("Cargar direccion al chofer", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                    return;
-                }
-                #endregion
+                        //}
+                        //else
+                        //{                                             
+                        //GRANUSA
+                        //oDatos.DoQuery("SELECT T0.\"DocEntry\",T0.\"DocNum\",T0.\"CardCode\",T0.\"CardName\",T2.\"LicTradNum\",CASE WHEN T3.\"Street\" IS NULL THEN 'Paraguay' ELSE T3.\"Street\" END,CASE WHEN T2.\"Cellular\" IS NULL THEN 'SINNUMERO' ELSE T2.\"Cellular\" END AS \"cel\",T0.\"DocDate\",T5.\"U_SET_FE\" AS \"moneda\"," +
+                        //          "CASE WHEN T0.\"GroupNum\"=-1 THEN 1 ELSE 2 END AS \"Cond\",T0.\"ExtraDays\",T1.\"ItemCode\",T1.\"Dscription\",T1.\"Quantity\",CASE WHEN T0.\"DocCur\"='GS' THEN ROUND(T1.\"Price\"+(T1.\"VatSum\"/T1.\"Quantity\")) ELSE ROUND(T1.\"Price\"+(T1.\"VatSumFrgn\"/T1.\"Quantity\"),2) END," +
+                        //          "CASE WHEN T1.\"TaxCode\"='IVA_10' THEN 10 WHEN T1.\"TaxCode\"='IVA_5' THEN 5 else 0 END AS \"Iva\",T4.\"U_SET_FE\" AS \"pais\",T0.\"Series\",T6.\"TaxIdNum\",T0.\"CreateTS\",T7.\"InstNum\", " +
+                        //          "CASE WHEN LENGTH(T0.\"CreateTS\") = '5' THEN 0||SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,1) || ':' || SUBSTRING(SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),2,3),1,2) ||':' || SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),4,5) WHEN LENGTH(T0.\"CreateTS\") = '6' THEN SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(T0.\"CreateTS\" AS VARCHAR(6)),5,6)  " +
+                        //          "WHEN LENGTH(T0.\"CreateTS\") = '3' THEN SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) " +
+                        //           "WHEN LENGTH(T0.\"CreateTS\") = '4' THEN SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(00||T0.\"CreateTS\" AS VARCHAR(6)),5,6)   " +
+                        //           "WHEN LENGTH(T0.\"CreateTS\") = '2' THEN SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),1,2) || ':' ||  SUBSTRING (SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),3,4),1,2) ||':' ||  SUBSTRING (CAST(0000||T0.\"CreateTS\" AS VARCHAR(6)),5,6) END \"HORA\", " +
+                        //          "T0.\"U_iIndPres\",T0.\"U_iTipTra\",T0.\"U_iTimp\",T9.\"U_SET_FE\",T2.\"U_iNatRec\",T2.\"U_iTipCont\",T10.\"Rate\", " +
+                        //          "CASE WHEN T11.\"U_CHAPA_CARRE\" is null THEN T0.\"U_VEHICULOS\" ELSE T11.\"U_CHAPA_CARRE\" END,T11.\"U_MARCA\",T0.\"U_TRANSPORTISTA\", " +
+                        //          "T12.\"U_iNatRec\",T12.\"CardName\",T12.\"LicTradNum\",T14.\"U_SET_FE\",T15.\"U_Documento\",T15.\"U_Nombre\"||', '||T15.\"U_Apellido\",T4.\"U_DESC_SET_FE\",T16.\"U_SET_FE\",T14.\"U_DESC_SET_FE\",  " +
+                        //          "T13.\"Street\",T15.\"U_Direccion\", " +
+                        //          "CASE WHEN T3.\"U_CdepSet\" IS NULL THEN 1 ELSE T3.\"U_CdepSet\" END,CASE WHEN T3.\"U_CdisSet\" IS NULL THEN 1 ELSE T3.\"U_CdisSet\" END,CASE WHEN T3.\"U_ClocSet\" IS NULL THEN 1 ELSE T3.\"U_ClocSet\" END, " +
+                        //          "T16.\"U_DESC_SET_FE\",CASE WHEN T0.\"U_ResFlete\" IS NULL THEN 1 ELSE T0.\"U_ResFlete\" END,T0.\"U_LICITACION\",T0.\"TransId\",T0.\"U_InfoAdicional\",T0.\"U_PerContacto\" " +
+                        //          "FROM " + tablacab + " T0 INNER JOIN " + tabladet + " T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" " +
+                        //          "LEFT JOIN OCRD T2 ON T2.\"CardCode\"=T0.\"CardCode\" LEFT JOIN CRD1 T3 ON T3.\"CardCode\"=T2.\"CardCode\" AND T3.\"Address\"=T0.\"PayToCode\" " +
+                        //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T4 ON T4.\"U_SAP\"=T3.\"Country\" " +
+                        //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T5 ON T5.\"U_SAP\"=T0.\"DocCur\" " +
+                        //          "LEFT JOIN OADM T6 ON T6.\"CompnyName\"='" + oCompany.CompanyName + "' " +
+                        //          "LEFT JOIN OCTG T7 ON T7.\"GroupNum\"=T0.\"GroupNum\" " +
+                        //          "LEFT JOIN OOND T8 ON T8.\"IndCode\"=T2.\"IndustryC\" " +
+                        //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T9 ON T9.\"U_SAP\"=T8.\"IndName\" " +
+                        //          "LEFT JOIN ORTT T10 ON T10.\"RateDate\"=T0.\"DocDate\" AND T10.\"Currency\"='USD' " +
+                        //          "LEFT JOIN \"@VEHICULOS\" T11 ON T11.\"Code\"=T0.\"U_VEHICULOS\" " +
+                        //          "LEFT JOIN OCRD T12 ON T12.\"CardCode\"=T0.\"U_TRANSPORTISTA\" " +
+                        //          "LEFT JOIN CRD1 T13 ON T13.\"CardCode\"=T12.\"CardCode\" AND T13.\"AdresType\"='B' " +
+                        //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T14 ON T14.\"U_SAP\"=T13.\"Country\" " +
+                        //          "LEFT JOIN \"@CHOFERES\" T15 ON T15.\"Code\"=T0.\"U_CHOFERES\" " +
+                        //          //"LEFT JOIN OCPR T15 ON T15.\"CardCode\"=T0.\"U_TRANSPORTISTA\" and T15.\"Name\"=T0.\"U_CHOFERES\" " +
+                        //          "LEFT JOIN \"@EQUIVALENCIAS_FE\" T16 ON T16.\"U_SAP\"=T0.\"U_ESTA\" " +
+                        //          "WHERE T0.\"DocNum\"='" + codigo + "'");
 
+                        //}
+                    }
 
-                //consulta para saber cuantas lineas posee el documento par poder instanciar el objeto de acuerdo a la cantidad de fila
-                Recordset oLineas;
-                oLineas = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oLineas.DoQuery("select COUNT(*) from " + tabladet + " where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
-                int i = int.Parse(oLineas.Fields.Item(0).Value.ToString());
-                //consultamos a traves de la serie, el folio, establecimiento y punto de expedición
-                Recordset oSerie;
-                oSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oSerie.DoQuery("SELECT \"BeginStr\",\"EndStr\",CASE WHEN \"NextFolio\" IS NULL THEN 0+1 ELSE \"NextFolio\"+1 END,\"Remark\" FROM NNM1 WHERE \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
-                string esta = oSerie.Fields.Item(0).Value.ToString();
-                string pun = oSerie.Fields.Item(1).Value.ToString();
-                int folio = int.Parse(oSerie.Fields.Item(2).Value.ToString());
-                string timbrado = oSerie.Fields.Item(3).Value.ToString();
-                //receptor
-                string rec_dep = oDatos.Fields.Item(43).Value.ToString();
-                string rec_dist = oDatos.Fields.Item(44).Value.ToString();
-                string rec_loc = oDatos.Fields.Item(45).Value.ToString();
-                //salida
-                string valorSalida = oDatos.Fields.Item(46).Value.ToString();
-                string sal_dep = null;
-                string sal_dist = null;
-                string sal_loc = null;
-                //responsable del flete
-                string ResFlete = oDatos.Fields.Item(47).Value.ToString();
-                string CodLicitacion = oDatos.Fields.Item(48).Value.ToString();
-                string transId = oDatos.Fields.Item(49).Value.ToString();
-                string infoadicional = oDatos.Fields.Item(51).Value.ToString();
-                string correo = oDatos.Fields.Item(52).Value.ToString();
-                //string infoExport = oDatos.Fields.Item(51).Value.ToString();
+                    #endregion
 
-                string valorG = valorSalida;
-                string[] guion = valorG.Split('-');
-                int g = 0;
-                foreach (string valor2 in guion)
-                {
-                    if (g == 0)
+                    //validamos los campos obligatorios
+                    #region VALIDACIONES
+                    if (tablacab.Equals("ODLN"))
                     {
-                        sal_dep = valor2;
+                        if (string.IsNullOrEmpty(direPay))
+                        {
+                            if (string.IsNullOrEmpty(direShip))
+                            {
+                                SBO_Application.StatusBar.SetText("Cargar direccion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                                oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                                return;
+                            }
+                        }
                     }
-                    if (g == 1)
-                    {
-                        sal_dist = valor2;
-                    }
-                    if (g == 2)
-                    {
-                        sal_loc = valor2;
-                    }
-                    g++;
-                }
-                //actualizamos los UDF
-                Recordset oActUDF;
-                oActUDF = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                oActUDF.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "' where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
-                ////actualizamos la numeracion de la serie           
-                //Recordset oActSerie;
-                //oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                //oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
-                //deconstruimos el RUC del emisor
-                string varE = oDatos.Fields.Item(18).Value.ToString();
-                int indexE = varE.IndexOf("-");
-                int canE = oDatos.Fields.Item(18).Value.ToString().Length;
-                string rucE = oDatos.Fields.Item(18).Value.ToString().Remove(indexE, canE - indexE);
-                string dvE = oDatos.Fields.Item(18).Value.ToString().Remove(0, indexE + 1);
-                string serieremi = oDatos.Fields.Item(17).Value.ToString();
-                //deconstruimos el RUC del cliente
-                string var = null;
-                int index = 0;
-                int can = 0;
-                string ruc = null;
-                string dv = null;
-                if (!oDatos.Fields.Item(25).Value.ToString().Equals("4"))
-                {
-                    var = oDatos.Fields.Item(4).Value.ToString();
-                    index = var.IndexOf("-");
-                    can = oDatos.Fields.Item(4).Value.ToString().Length;
-                    ruc = oDatos.Fields.Item(4).Value.ToString().Remove(index, can - index);
-                    dv = oDatos.Fields.Item(4).Value.ToString().Remove(0, index + 1);
-                }
-                //instaciamos los objetos que vutilizaremos
-                servicio.FacturacionElectronicaClient cliente = new servicio.FacturacionElectronicaClient();
-                servicio.procesarLotePorFacturaRequest procesarFactura = new servicio.procesarLotePorFacturaRequest();
-                servicio.procesarDocumento procesarDocumento = new servicio.procesarDocumento();
-                servicio.procesarDocumento[] procesarDocumento2 = new servicio.procesarDocumento[1];
-                servicio.rDE rDE = new servicio.rDE();
-                servicio.DE DE = new servicio.DE();
-                servicio.gOpeDE gOpeDE = new servicio.gOpeDE();
-                servicio.gTimb gTimb = new servicio.gTimb();
-                servicio.gDatGralOpe gDatGralOpe = new servicio.gDatGralOpe();
-                servicio.gOpeCom gOpeCom = new servicio.gOpeCom();
-                servicio.gEmis gEmis = new servicio.gEmis();
-                servicio.gDatRec gDatRec = new servicio.gDatRec();
-                servicio.gCamFE gCamFE = new servicio.gCamFE();
-                servicio.gCamFEE gCamFEE = new servicio.gCamFEE();
-                servicio.gCamFEI gCamFEI = new servicio.gCamFEI();
-                servicio.gCamAE gCamAE = new servicio.gCamAE();
-                servicio.gCamNCDE gCamNCDE = new servicio.gCamNCDE();
-                servicio.gCamNRE gCamNRE = new servicio.gCamNRE();
-                servicio.gDtipDE gDtipDE = new servicio.gDtipDE();
-                servicio.gCamCond gCamCond = new servicio.gCamCond();
-                servicio.gCamItem gCamItem = new servicio.gCamItem();
-                servicio.gCamItem[] gCamItem1 = new servicio.gCamItem[i];
-                servicio.gValorItem gValorItem = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA = new servicio.gCamIVA();
-                servicio.gActEco gActEco = new servicio.gActEco();
-                servicio.gActEco[] gActEco1 = new servicio.gActEco[1];
-                servicio.gRespDE gResPDE = new servicio.gRespDE();
-                servicio.gCompPub gCompPub = new servicio.gCompPub();
-                servicio.gPaConEIni gPaConEIni = new servicio.gPaConEIni();
-                servicio.gPaConEIni[] gPaConEIni1 = new servicio.gPaConEIni[1];
-                servicio.gPagCheq gPagCheq = new servicio.gPagCheq();
-                servicio.gPagTarCD gPagTarCD = new servicio.gPagTarCD();
-                servicio.gPagCred gPagCred = new servicio.gPagCred();
-                servicio.gCuotas gCuotas = new servicio.gCuotas();
-                servicio.gCuotas[] gCuotas1 = new servicio.gCuotas[1];
-                servicio.gVehNuevo gVehNuevo = new servicio.gVehNuevo();
-                servicio.gRasMerc gRasMerc = new servicio.gRasMerc();
-                servicio.gCamEsp gCamEsp = new servicio.gCamEsp();
-                servicio.gGrupAdi gGrupAdi = new servicio.gGrupAdi();
-                servicio.gGrupEner gGrupEner = new servicio.gGrupEner();
-                servicio.gGrupSeg gGrupSeg = new servicio.gGrupSeg();
-                servicio.gGrupPolSeg gGrupPolSeg = new servicio.gGrupPolSeg();
-                servicio.gGrupPolSeg[] gGrupPolSeg1 = new servicio.gGrupPolSeg[1];
-                servicio.gGrupSup gGrupSup = new servicio.gGrupSup();
-                servicio.gTransp gTransp = new servicio.gTransp();
-                servicio.gCamEnt gCamEnt = new servicio.gCamEnt();
-                servicio.gCamEnt[] gCamEnt1 = new servicio.gCamEnt[1];
-                servicio.gCamSal gCamSal = new servicio.gCamSal();
-                servicio.gCamTrans gCamTrans = new servicio.gCamTrans();
-                servicio.gVehTras gVehTras = new servicio.gVehTras();
-                servicio.gVehTras[] gVehTras1 = new servicio.gVehTras[1];
-                servicio.gTotSub gTotSub = new servicio.gTotSub();
-                servicio.gCamGen gCamGen = new servicio.gCamGen();
-                servicio.gCamCarg gCamCarg = new servicio.gCamCarg();
-                servicio.gCamDEAsoc gCamDEAsoc = new servicio.gCamDEAsoc();
-                servicio.gCamDEAsoc[] gCamDEAsoc1 = new servicio.gCamDEAsoc[1];
-                servicio.gCamFuFD gCamFuFD = new servicio.gCamFuFD();
-                servicio.docAsociado docAsociado = new servicio.docAsociado();
-                servicio.docAsociado[] docAsociado1 = new servicio.docAsociado[1];
-                servicio.parametrosProcesamiento parametros = new servicio.parametrosProcesamiento();
-                servicio.resultadoProcesamiento[] resultadoProcesamiento = new servicio.resultadoProcesamiento[1];
-                servicio.documentoElectronicoGenerado[] documentoElectronicoGenerado = new servicio.documentoElectronicoGenerado[1];
-                #region LINEAS
-                //linea 2
-                servicio.gCamItem gCamItem2 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem2 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem2 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA2 = new servicio.gCamIVA();
-                //linea 3
-                servicio.gCamItem gCamItem3 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem3 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem3 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA3 = new servicio.gCamIVA();
-                //linea 4
-                servicio.gCamItem gCamItem4 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem4 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem4 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA4 = new servicio.gCamIVA();
-                //linea 5
-                servicio.gCamItem gCamItem5 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem5 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem5 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA5 = new servicio.gCamIVA();
-                //linea 6
-                servicio.gCamItem gCamItem6 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem6 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem6 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA6 = new servicio.gCamIVA();
-                //linea 7
-                servicio.gCamItem gCamItem7 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem7 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem7 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA7 = new servicio.gCamIVA();
-                //linea 8
-                servicio.gCamItem gCamItem8 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem8 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem8 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA8 = new servicio.gCamIVA();
-                //linea 9
-                servicio.gCamItem gCamItem9 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem9 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem9 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA9 = new servicio.gCamIVA();
-                //linea 10
-                servicio.gCamItem gCamItem10 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem10 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem10 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA10 = new servicio.gCamIVA();
-                //linea11
-                servicio.gCamItem gCamItem11 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem11 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem11 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA11 = new servicio.gCamIVA();
-                //linea 12
-                servicio.gCamItem gCamItem12 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem12 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem12 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA12 = new servicio.gCamIVA();
-                //linea 13
-                servicio.gCamItem gCamItem13 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem13 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem13 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA13 = new servicio.gCamIVA();
-                //linea 14
-                servicio.gCamItem gCamItem14 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem14 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem14 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA14 = new servicio.gCamIVA();
-                //linea 15
-                servicio.gCamItem gCamItem15 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem15 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem15 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA15 = new servicio.gCamIVA();
-                //linea 16
-                servicio.gCamItem gCamItem16 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem16 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem16 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA16 = new servicio.gCamIVA();
-                //linea 17
-                servicio.gCamItem gCamItem17 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem17 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem17 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA17 = new servicio.gCamIVA();
-                //linea 18
-                servicio.gCamItem gCamItem18 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem18 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem18 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA18 = new servicio.gCamIVA();
-                //linea 19
-                servicio.gCamItem gCamItem19 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem19 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem19 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA19 = new servicio.gCamIVA();
-                //linea 20
-                servicio.gCamItem gCamItem20 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem20 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem20 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA20 = new servicio.gCamIVA();
-                //linea 21
-                servicio.gCamItem gCamItem21 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem21 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem21 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA21 = new servicio.gCamIVA();
-                //linea 22
-                servicio.gCamItem gCamItem22 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem22 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem22 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA22 = new servicio.gCamIVA();
-                //linea 23
-                servicio.gCamItem gCamItem23 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem23 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem23 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA23 = new servicio.gCamIVA();
-                //linea 24
-                servicio.gCamItem gCamItem24 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem24 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem24 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA24 = new servicio.gCamIVA();
-                //linea 25
-                servicio.gCamItem gCamItem25 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem25 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem25 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA25 = new servicio.gCamIVA();
-                //linea 26
-                servicio.gCamItem gCamItem26 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem26 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem26 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA26 = new servicio.gCamIVA();
-                //linea 27
-                servicio.gCamItem gCamItem27 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem27 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem27 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA27 = new servicio.gCamIVA();
-                //linea 28
-                servicio.gCamItem gCamItem28 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem28 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem28 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA28 = new servicio.gCamIVA();
-                //linea 29
-                servicio.gCamItem gCamItem29 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem29 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem29 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA29 = new servicio.gCamIVA();
-                //linea 30
-                servicio.gCamItem gCamItem30 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem30 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem30 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA30 = new servicio.gCamIVA();
-                //linea 31
-                servicio.gCamItem gCamItem31 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem31 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem31 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA31 = new servicio.gCamIVA();
-                //linea 32
-                servicio.gCamItem gCamItem32 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem32 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem32 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA32 = new servicio.gCamIVA();
-                //linea 33
-                servicio.gCamItem gCamItem33 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem33 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem33 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA33 = new servicio.gCamIVA();
-                //linea 34
-                servicio.gCamItem gCamItem34 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem34 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem34 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA34 = new servicio.gCamIVA();
-                //linea 35
-                servicio.gCamItem gCamItem35 = new servicio.gCamItem();
-                servicio.gValorItem gValorItem35 = new servicio.gValorItem();
-                servicio.gValorRestaItem gValorRestaItem35 = new servicio.gValorRestaItem();
-                servicio.gCamIVA gCamIVA35 = new servicio.gCamIVA();
-                #endregion
-                //armamos la estructura que enviaremos con los datos
-                //gOpeDE
-                gOpeDE.iTipEmi = "1";
-                gOpeDE.dInfoFisc = "Remision";
-                string oper = oDatos.Fields.Item(25).Value.ToString();
-                if (!string.IsNullOrEmpty(infoadicional))
-                {
-                    gOpeDE.dInfoEmi = infoadicional;
-                }
-                //gTimb
-                gTimb.iTiDE = "7";
-                gTimb.dNumTim = timbrado;// timbrado;
-                gTimb.dEst = esta;// esta;
-                gTimb.dPunExp = pun;// pun;
-                gTimb.dNumDoc = folio.ToString("D7");
-                //gDatGralOpe
-                //armamos el formato de la fecha
-                string hora = oDatos.Fields.Item(21).Value.ToString();
-                DateTime fe = Convert.ToDateTime(oDatos.Fields.Item(7).Value.ToString());
-                string fecha = fe.ToString("yyyy-MM-dd") + "T" + hora; //oDatos.Fields.Item(7).Value.ToString("yyyy-MM-dd") + "T" + hora;        
-                gDatGralOpe.dFeEmiDE = DateTime.Parse(fecha);//DateTime.Parse("2022-11-01T17:41:55");
-                gDatGralOpe.dFeEmiDESpecified = true;
-                //gEmis
-                gEmis.dRucEm = rucE;
-                gEmis.dDVEmi = dvE;
-                //gEmis.dDirEmi = "";//la direccion del punto de expedicion           
-                //gDatRec
-                gDatRec.iNatRec = oDatos.Fields.Item(26).Value.ToString();
-                gDatRec.iTiOpe = oDatos.Fields.Item(25).Value.ToString();
-                if (!string.IsNullOrEmpty(correo))
-                {
-                    gDatRec.dEmailRec = correo;
-                }
-                string pais = oDatos.Fields.Item(16).Value.ToString();
-                if (string.IsNullOrEmpty(pais))
-                {
-                    gDatRec.cPaisRec = "PRY";
-                }
-                else
-                {
-                    gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
-                }
-                //gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
-                gDatRec.dDesPaisRe = oDatos.Fields.Item(38).Value.ToString();
 
-                gDatRec.dNomRec = oDatos.Fields.Item(3).Value.ToString();//"BIGGIE S.A - LAMBARE ROA BASTOS";
-                string direRec = oDatos.Fields.Item(5).Value.ToString();
-                string newdireRec = null;
-                if (!Regex.IsMatch(direRec, @"^[a-zA-Z-0-9]+$") == true)
-                {
-                    newdireRec = Regex.Replace(direRec, @"[^0-9a-zA-Z ]+", "");
-                }
-                else
-                {
-                    newdireRec = direRec;
-                }
-                gDatRec.dDirRec = newdireRec;// oDatos.Fields.Item(5).Value.ToString();//"AVDA AUGUSTO ROA BASTOS esq San Marcos";
-                gDatRec.dNumCasRec = "0";
-                gDatRec.dTelRec = oDatos.Fields.Item(6).Value.ToString();//"021615257";
-                if (oDatos.Fields.Item(16).Value.ToString() == "PRY")
-                {
-                    gDatRec.dRucRec = ruc;
-                    gDatRec.dDVRec = dv;
-                    gDatRec.cDepRec = rec_dep;
-                    gDatRec.cDisRec = rec_dist;
-                    gDatRec.cCiuRec = rec_loc;
-                    gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
-                }
-                //gCamSal
-                gCamSal.dDirLocSal = oDatos.Fields.Item(39).Value.ToString();
-                gCamSal.dNumCasSal = "0";
-                //gCamSal.dComp1Sal =  "aviadores del chaco";
-                gCamSal.cDepSal = sal_dep;
-                gCamSal.cDisSal = sal_dist;
-                gCamSal.cCiuSal = sal_loc;
-                //gCamEnt
-                gCamEnt.dDirLocEnt = newdireRec;// oDatos.Fields.Item(5).Value.ToString(); //"santa teresa";
-                gCamEnt.dNumCasEnt = "0";
-                gCamEnt.cDepEnt = rec_dep;
-                gCamEnt.cDisEnt = rec_dist;
-                gCamEnt.cCiuEnt = rec_loc;
-                gCamEnt1[0] = gCamEnt;
-
-                //LICITACION
-                #region LICITACION
-                if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                {
-                    Recordset oLicitacion;
-                    oLicitacion = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oLicitacion.DoQuery("SELECT \"U_dModCont\",\"U_dEntCont\",\"U_dAnoCont\",\"U_dSecCont\",\"U_dFeCodCont\" FROM \"@LICITACION\" WHERE \"U_LICI\"='" + CodLicitacion + "'");
-
-                    gCompPub.dModCont = oLicitacion.Fields.Item(0).Value.ToString();//"LP";
-                    gCompPub.dEntCont = oLicitacion.Fields.Item(1).Value.ToString(); //"12009";
-                    gCompPub.dAnoCont = oLicitacion.Fields.Item(2).Value.ToString(); //"22";
-                    int sec = int.Parse(oLicitacion.Fields.Item(2).Value.ToString());
-                    gCompPub.dSecCont = sec.ToString("D7");// oLicitacion.Fields.Item(3).Value.ToString(); //"218529";
-                    DateTime v_fechaLic = DateTime.Parse(oLicitacion.Fields.Item(4).Value.ToString());
-                    string fechalic_v = v_fechaLic.ToString("yyyy-MM-dd");
-                    gCompPub.dFeCodCont = DateTime.Parse(fechalic_v);//DateTime.Parse("2022-08-31");
-                    gCompPub.dFeCodContSpecified = true;
-                    gCamFE.gCompPub = gCompPub;
-                    //gDtipDE.gCamFE = gCamFE;
-
-
-                }
-                #endregion
-
-
-                if (oDatos.Fields.Item(34).Value.ToString() == varE)
-                {
-                    gTransp.iTipTrans = "1";
-                    gTransp.dDesTipTrans = "Propio";
-                }
-                else
-                {
-                    gTransp.iTipTrans = "2";
-                    gTransp.dDesTipTrans = "Tercero";
-                }
-                gTransp.iModTrans = "1";
-                gTransp.iRespFlete = ResFlete;
-                gTransp.dIniTras = fe;
-                gTransp.dIniTrasSpecified = true;
-                gTransp.dFinTras = fe;
-                gTransp.dFinTrasSpecified = true;
-                //gVehTras
-                //gTransp.gVehTras = gVehTras1;
-                gVehTras1[0] = gVehTras;
-                gVehTras.dTiVehTras = "Terrestre";
-                gVehTras.dMarVeh = oDatos.Fields.Item(30).Value.ToString();
-                gVehTras.dTipIdenVeh = "2";
-                gVehTras.dNroMatVeh = oDatos.Fields.Item(29).Value.ToString();
-                //gCamTrans
-                gCamTrans.iNatTrans = oDatos.Fields.Item(32).Value.ToString();
-                gCamTrans.dNomTrans = oDatos.Fields.Item(33).Value.ToString();
-                //deconstruimos el RUC del transportista
-                string rucCam = null;
-                string dvCam = null;
-                if (oDatos.Fields.Item(32).Value.ToString() == "1")
-                {
-                    string varCam = oDatos.Fields.Item(34).Value.ToString();
-                    int indexCam = varCam.IndexOf("-");
-                    int canCam = oDatos.Fields.Item(34).Value.ToString().Length;
-                    rucCam = oDatos.Fields.Item(34).Value.ToString().Remove(indexCam, canCam - indexCam);
-                    dvCam = oDatos.Fields.Item(34).Value.ToString().Remove(0, indexCam + 1);
-                }
-                string paisTrans = oDatos.Fields.Item(35).Value.ToString();
-                if (paisTrans.Equals("PRY"))
-                {
-                    gCamTrans.dRucTrans = rucCam;
-                    gCamTrans.dDVTrans = dvCam;
-                }
-                else
-                {
-                    gCamTrans.dNumIDTrans = oDatos.Fields.Item(34).Value.ToString();
-                    gCamTrans.iTipIDTrans = "3";
-                    gCamTrans.dDTipIDTrans = "Cédula extranjera";
-                }
-                gCamTrans.cNacTrans = oDatos.Fields.Item(35).Value.ToString();
-                gCamTrans.dDesNacTrans = oDatos.Fields.Item(40).Value.ToString();
-                gCamTrans.dDomFisc = oDatos.Fields.Item(41).Value.ToString();
-                gCamTrans.dNumIDChof = oDatos.Fields.Item(36).Value.ToString();
-                gCamTrans.dNomChof = oDatos.Fields.Item(37).Value.ToString();
-                string direChofer = oDatos.Fields.Item(42).Value.ToString();
-                string newdireChofer = null;
-                if (!Regex.IsMatch(direChofer, @"^[a-zA-Z-0-9]+$") == true)
-                {
-                    newdireChofer = Regex.Replace(direChofer, @"[^0-9a-zA-Z ]+", "");
-                }
-                else
-                {
-                    newdireChofer = direChofer;
-                }
-                gCamTrans.dDirChof = newdireChofer;// oDatos.Fields.Item(42).Value.ToString();
-                //gCamNRE
-                string motivo = null;
-                string codmotivo = null;
-                if (tablacab.Equals("OWTR"))
-                {
-                    codmotivo = "7";
-                    motivo = "Traslado entre locales de la empresa";
-                }
-                else
-                {
-                    codmotivo = "1";
-                    motivo = "Traslado por ventas";
-                }
-                gCamNRE.iMotEmiNR = codmotivo;// "1";
-                gCamNRE.dDesMotEmiNR = motivo;// "Traslado por ventas";
-                gCamNRE.iRespEmiNR = "1";
-                gCamNRE.dDesRespEmiNR = "Emisor de la factura";
-                gCamNRE.dKmR = "3";
-                //gCamItem
-                int f = 0;
-                //recorremos el recordset y mandamos los datos del detalle al objeto
-                while (!oDatos.EoF)
-                {
-                    #region DETALLE
-                    if (f == 0)
+                    string v_natu = oDatos.Fields.Item(26).Value.ToString();
+                    if (string.IsNullOrEmpty(v_natu))
                     {
-                        gCamItem.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
-                            double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem.dDncpG = dncpNum.ToString();
-                        }
-                        gCamItem1[f] = gCamItem;
+                        SBO_Application.StatusBar.SetText("Cargar naturaleza al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 1)
+                    string v_ope = oDatos.Fields.Item(25).Value.ToString();
+                    if (string.IsNullOrEmpty(v_ope) || v_ope.Equals("0"))
                     {
-                        decimal ll = decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
-                        gCamItem2.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem2.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem2.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem2.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();// "024";
-                            double dncpNum2 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem2.dDncpG = dncpNum2.ToString();
-                        }
-                        gCamItem1[f] = gCamItem2;
+                        SBO_Application.StatusBar.SetText("Cargar tipo de operacion al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 2)
+                    string v_cont = oDatos.Fields.Item(27).Value.ToString();
+                    if (string.IsNullOrEmpty(v_cont))
                     {
-
-                        gCamItem3.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem3.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem3.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem3.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum3 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem3.dDncpG = dncpNum3.ToString();
-                        }
-                        gCamItem1[f] = gCamItem3;
+                        SBO_Application.StatusBar.SetText("Cargar tipo de contribuyente al Socio de Negocio", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        return;
                     }
-                    if (f == 3)
+                    string v_direSal = oDatos.Fields.Item(39).Value.ToString();
+                    if (string.IsNullOrEmpty(v_direSal))
                     {
-                        gCamItem4.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem4.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem4.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem4.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum4 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem4.dDncpG = dncpNum4.ToString();
-                        }
-                        gCamItem1[f] = gCamItem4;
+                        SBO_Application.StatusBar.SetText("Cargar direccion del establecimiento", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 4)
+                    string v_natTrans = oDatos.Fields.Item(32).Value.ToString();
+                    if (string.IsNullOrEmpty(v_natTrans))
                     {
-                        gCamItem5.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem5.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem5.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem5.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum5 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem5.dDncpG = dncpNum5.ToString();
-                        }
-                        gCamItem1[f] = gCamItem5;
+                        SBO_Application.StatusBar.SetText("Cargar naturaleza del transportista", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 5)
+                    string v_direTrans = oDatos.Fields.Item(41).Value.ToString();
+                    if (string.IsNullOrEmpty(v_direTrans))
                     {
-                        gCamItem6.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem6.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem6.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem6.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum6 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem6.dDncpG = dncpNum6.ToString();
-                        }
-                        gCamItem1[f] = gCamItem6;
+                        SBO_Application.StatusBar.SetText("Cargar direccion del transportista", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 6)
+                    string v_chof = oDatos.Fields.Item(37).Value.ToString();
+                    if (string.IsNullOrEmpty(v_chof))
                     {
-                        gCamItem7.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem7.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem7.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem7.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); // "024";
-                            double dncpNum7 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem7.dDncpG = dncpNum7.ToString();
-                        }
-                        gCamItem1[f] = gCamItem7;
+                        SBO_Application.StatusBar.SetText("Cargar un chofer a la remision", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 7)
+                    string v_idchof = oDatos.Fields.Item(36).Value.ToString();
+                    if (string.IsNullOrEmpty(v_idchof))
                     {
-                        gCamItem8.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem8.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem8.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem8.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum8 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem8.dDncpG = dncpNum8.ToString();
-                        }
-                        gCamItem1[f] = gCamItem8;
+                        SBO_Application.StatusBar.SetText("Cargar cedula al chofer", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
-                    if (f == 8)
+                    string v_direChof = oDatos.Fields.Item(42).Value.ToString();
+                    if (string.IsNullOrEmpty(v_direChof))
                     {
-                        gCamItem9.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem9.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem9.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem9.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum9 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem9.dDncpG = dncpNum9.ToString();
-                        }
-                        gCamItem1[f] = gCamItem9;
-                    }
-                    if (f == 9)
-                    {
-                        gCamItem10.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem10.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem10.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem10.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum10 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem10.dDncpG = dncpNum10.ToString();
-                        }
-                        gCamItem1[f] = gCamItem10;
-                    }
-                    if (f == 10)
-                    {
-                        gCamItem11.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem11.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem11.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem11.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum11 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem11.dDncpG = dncpNum11.ToString();
-                        }
-                        gCamItem1[f] = gCamItem11;
-                    }
-                    if (f == 11)
-                    {
-                        gCamItem12.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem12.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem12.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem12.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum12 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem12.dDncpG = dncpNum12.ToString();
-                        }
-                        gCamItem1[f] = gCamItem12;
-                    }
-                    if (f == 12)
-                    {
-                        gCamItem13.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem13.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem13.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem13.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum13 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem13.dDncpG = dncpNum13.ToString();
-                        }
-                        gCamItem1[f] = gCamItem13;
-                    }
-                    if (f == 13)
-                    {
-                        gCamItem14.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem14.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem14.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem14.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum14 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem14.dDncpG = dncpNum14.ToString();
-                        }
-                        gCamItem1[f] = gCamItem14;
-                    }
-                    if (f == 14)
-                    {
-                        gCamItem15.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem15.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem15.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem15.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum15 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem15.dDncpG = dncpNum15.ToString();
-                        }
-                        gCamItem1[f] = gCamItem15;
-                    }
-                    if (f == 15)
-                    {
-                        gCamItem16.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem16.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem16.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem16.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum16 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem16.dDncpG = dncpNum16.ToString();
-                        }
-                        gCamItem1[f] = gCamItem16;
-                    }
-                    if (f == 16)
-                    {
-                        gCamItem17.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem17.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem17.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem17.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum17 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem17.dDncpG = dncpNum17.ToString();
-                        }
-                        gCamItem1[f] = gCamItem17;
-                    }
-                    if (f == 17)
-                    {
-                        gCamItem18.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem18.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem18.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem18.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum18 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem18.dDncpG = dncpNum18.ToString();
-                        }
-                        gCamItem1[f] = gCamItem18;
-                    }
-                    if (f == 18)
-                    {
-                        gCamItem19.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem19.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem19.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem19.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum19 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem19.dDncpG = dncpNum19.ToString();
-                        }
-                        gCamItem1[f] = gCamItem19;
-                    }
-                    if (f == 19)
-                    {
-                        gCamItem20.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem20.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem20.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem20.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
-                            double dncpNum20 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
-                            gCamItem20.dDncpG = dncpNum20.ToString();
-                        }
-                        gCamItem1[f] = gCamItem20;
-                    }
-                    if (f == 20)
-                    {
-                        gCamItem21.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem21.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem21.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            Recordset oLiciDet;
-                            oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                            oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
-
-                            gCamItem21.dDncpE = "024";
-                            int dncpNum21 = 50112001;
-                            gCamItem21.dDncpG = dncpNum21.ToString();
-                        }
-                        gCamItem1[f] = gCamItem21;
-                    }
-                    if (f == 21)
-                    {
-                        gCamItem22.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem22.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem22.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem22.dDncpE = "024";
-                            int dncpNum22 = 50112001;
-                            gCamItem22.dDncpG = dncpNum22.ToString();
-                        }
-                        gCamItem1[f] = gCamItem22;
-                    }
-                    if (f == 22)
-                    {
-                        gCamItem23.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem23.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem23.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem23.dDncpE = "024";
-                            int dncpNum23 = 50112001;
-                            gCamItem23.dDncpG = dncpNum23.ToString("");
-                        }
-                        gCamItem1[f] = gCamItem23;
-                    }
-                    if (f == 23)
-                    {
-                        gCamItem24.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem24.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem24.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem24.dDncpE = "024";
-                            int dncpNum24 = 50112001;
-                            gCamItem24.dDncpG = dncpNum24.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem24;
-                    }
-                    if (f == 24)
-                    {
-                        gCamItem25.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem25.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem25.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem25.dDncpE = "024";
-                            int dncpNum25 = 50112001;
-                            gCamItem25.dDncpG = dncpNum25.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem25;
-                    }
-                    if (f == 25)
-                    {
-                        gCamItem26.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem26.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem26.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem26.dDncpE = "024";
-                            int dncpNum26 = 50112001;
-                            gCamItem26.dDncpG = dncpNum26.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem26;
-                    }
-                    if (f == 26)
-                    {
-                        gCamItem27.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem27.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem27.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem27.dDncpE = "024";
-                            int dncpNum27 = 50112001;
-                            gCamItem27.dDncpG = dncpNum27.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem27;
-                    }
-                    if (f == 27)
-                    {
-                        gCamItem28.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem28.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem28.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem28.dDncpE = "024";
-                            int dncpNum28 = 50112001;
-                            gCamItem28.dDncpG = dncpNum28.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem28;
-                    }
-                    if (f == 28)
-                    {
-                        gCamItem29.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem29.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem29.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem29.dDncpE = "024";
-                            int dncpNum29 = 50112001;
-                            gCamItem29.dDncpG = dncpNum29.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem29;
-                    }
-                    if (f == 29)
-                    {
-                        gCamItem30.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem30.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem30.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem30.dDncpE = "024";
-                            int dncpNum30 = 50112001;
-                            gCamItem30.dDncpG = dncpNum30.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem30;
-                    }
-                    if (f == 30)
-                    {
-                        gCamItem31.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem31.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem31.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem31.dDncpE = "024";
-                            int dncpNum31 = 50112001;
-                            gCamItem31.dDncpG = dncpNum31.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem31;
-                    }
-                    if (f == 31)
-                    {
-                        gCamItem32.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem32.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem32.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem32.dDncpE = "024";
-                            int dncpNum32 = 50112001;
-                            gCamItem32.dDncpG = dncpNum32.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem32;
-                    }
-                    if (f == 32)
-                    {
-                        gCamItem33.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem33.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem33.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem33.dDncpE = "024";
-                            int dncpNum33 = 50112001;
-                            gCamItem33.dDncpG = dncpNum33.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem33;
-                    }
-                    if (f == 33)
-                    {
-                        gCamItem34.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem34.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem34.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem34.dDncpE = "024";
-                            int dncpNum34 = 50112001;
-                            gCamItem34.dDncpG = dncpNum34.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem34;
-                    }
-                    if (f == 34)
-                    {
-                        gCamItem35.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
-                        gCamItem35.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
-                        gCamItem35.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
-                        if (oDatos.Fields.Item(25).Value.ToString() == "3")
-                        {
-                            gCamItem35.dDncpE = "024";
-                            int dncpNum35 = 50112001;
-                            gCamItem35.dDncpG = dncpNum35.ToString("D8");
-                        }
-                        gCamItem1[f] = gCamItem35;
+                        SBO_Application.StatusBar.SetText("Cargar direccion al chofer", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Error);
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
+                        return;
                     }
                     #endregion
 
-                    f++;
-                    oDatos.MoveNext();
+
+                    //consulta para saber cuantas lineas posee el documento par poder instanciar el objeto de acuerdo a la cantidad de fila
+                    Recordset oLineas;
+                    oLineas = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oLineas.DoQuery("select COUNT(*) from " + tabladet + " where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
+                    int i = int.Parse(oLineas.Fields.Item(0).Value.ToString());
+                    //consultamos a traves de la serie, el folio, establecimiento y punto de expedición
+                    Recordset oSerie;
+                    oSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oSerie.DoQuery("SELECT \"BeginStr\",\"EndStr\",CASE WHEN \"NextFolio\" IS NULL THEN 0+1 ELSE \"NextFolio\"+1 END,\"Remark\" FROM NNM1 WHERE \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
+                    string esta = oSerie.Fields.Item(0).Value.ToString();
+                    string pun = oSerie.Fields.Item(1).Value.ToString();
+                    int folio = int.Parse(oSerie.Fields.Item(2).Value.ToString());
+                    string timbrado = oSerie.Fields.Item(3).Value.ToString();
+                    //receptor
+                    string rec_dep = oDatos.Fields.Item(43).Value.ToString();
+                    string rec_dist = oDatos.Fields.Item(44).Value.ToString();
+                    string rec_loc = oDatos.Fields.Item(45).Value.ToString();
+                    //salida
+                    string valorSalida = oDatos.Fields.Item(46).Value.ToString();
+                    string sal_dep = null;
+                    string sal_dist = null;
+                    string sal_loc = null;
+                    //responsable del flete
+                    string ResFlete = oDatos.Fields.Item(47).Value.ToString();
+                    string CodLicitacion = oDatos.Fields.Item(48).Value.ToString();
+                    string transId = oDatos.Fields.Item(49).Value.ToString();
+                    string infoadicional = oDatos.Fields.Item(51).Value.ToString();
+                    string correo = oDatos.Fields.Item(52).Value.ToString();
+                    //string infoExport = oDatos.Fields.Item(51).Value.ToString();
+
+                    string valorG = valorSalida;
+                    string[] guion = valorG.Split('-');
+                    int g = 0;
+                    foreach (string valor2 in guion)
+                    {
+                        if (g == 0)
+                        {
+                            sal_dep = valor2;
+                        }
+                        if (g == 1)
+                        {
+                            sal_dist = valor2;
+                        }
+                        if (g == 2)
+                        {
+                            sal_loc = valor2;
+                        }
+                        g++;
+                    }
+                    //actualizamos los UDF
+                    Recordset oActUDF;
+                    oActUDF = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    oActUDF.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "' where \"DocEntry\"='" + oDatos.Fields.Item(0).Value.ToString() + "'");
+                    ////actualizamos la numeracion de la serie           
+                    //Recordset oActSerie;
+                    //oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    //oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"=" + oDatos.Fields.Item(17).Value.ToString());
+                    //deconstruimos el RUC del emisor
+                    string varE = oDatos.Fields.Item(18).Value.ToString();
+                    int indexE = varE.IndexOf("-");
+                    int canE = oDatos.Fields.Item(18).Value.ToString().Length;
+                    string rucE = oDatos.Fields.Item(18).Value.ToString().Remove(indexE, canE - indexE);
+                    string dvE = oDatos.Fields.Item(18).Value.ToString().Remove(0, indexE + 1);
+                    string serieremi = oDatos.Fields.Item(17).Value.ToString();
+                    //deconstruimos el RUC del cliente
+                    string var = null;
+                    int index = 0;
+                    int can = 0;
+                    string ruc = null;
+                    string dv = null;
+                    if (!oDatos.Fields.Item(25).Value.ToString().Equals("4"))
+                    {
+                        var = oDatos.Fields.Item(4).Value.ToString();
+                        index = var.IndexOf("-");
+                        can = oDatos.Fields.Item(4).Value.ToString().Length;
+                        ruc = oDatos.Fields.Item(4).Value.ToString().Remove(index, can - index);
+                        dv = oDatos.Fields.Item(4).Value.ToString().Remove(0, index + 1);
+                    }
+                    //instaciamos los objetos que vutilizaremos
+                    servicio.FacturacionElectronicaClient cliente = new servicio.FacturacionElectronicaClient();
+                    servicio.procesarLotePorFacturaRequest procesarFactura = new servicio.procesarLotePorFacturaRequest();
+                    servicio.procesarDocumento procesarDocumento = new servicio.procesarDocumento();
+                    servicio.procesarDocumento[] procesarDocumento2 = new servicio.procesarDocumento[1];
+                    servicio.rDE rDE = new servicio.rDE();
+                    servicio.DE DE = new servicio.DE();
+                    servicio.gOpeDE gOpeDE = new servicio.gOpeDE();
+                    servicio.gTimb gTimb = new servicio.gTimb();
+                    servicio.gDatGralOpe gDatGralOpe = new servicio.gDatGralOpe();
+                    servicio.gOpeCom gOpeCom = new servicio.gOpeCom();
+                    servicio.gEmis gEmis = new servicio.gEmis();
+                    servicio.gDatRec gDatRec = new servicio.gDatRec();
+                    servicio.gCamFE gCamFE = new servicio.gCamFE();
+                    servicio.gCamFEE gCamFEE = new servicio.gCamFEE();
+                    servicio.gCamFEI gCamFEI = new servicio.gCamFEI();
+                    servicio.gCamAE gCamAE = new servicio.gCamAE();
+                    servicio.gCamNCDE gCamNCDE = new servicio.gCamNCDE();
+                    servicio.gCamNRE gCamNRE = new servicio.gCamNRE();
+                    servicio.gDtipDE gDtipDE = new servicio.gDtipDE();
+                    servicio.gCamCond gCamCond = new servicio.gCamCond();
+                    servicio.gCamItem gCamItem = new servicio.gCamItem();
+                    servicio.gCamItem[] gCamItem1 = new servicio.gCamItem[i];
+                    servicio.gValorItem gValorItem = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA = new servicio.gCamIVA();
+                    servicio.gActEco gActEco = new servicio.gActEco();
+                    servicio.gActEco[] gActEco1 = new servicio.gActEco[1];
+                    servicio.gRespDE gResPDE = new servicio.gRespDE();
+                    servicio.gCompPub gCompPub = new servicio.gCompPub();
+                    servicio.gPaConEIni gPaConEIni = new servicio.gPaConEIni();
+                    servicio.gPaConEIni[] gPaConEIni1 = new servicio.gPaConEIni[1];
+                    servicio.gPagCheq gPagCheq = new servicio.gPagCheq();
+                    servicio.gPagTarCD gPagTarCD = new servicio.gPagTarCD();
+                    servicio.gPagCred gPagCred = new servicio.gPagCred();
+                    servicio.gCuotas gCuotas = new servicio.gCuotas();
+                    servicio.gCuotas[] gCuotas1 = new servicio.gCuotas[1];
+                    servicio.gVehNuevo gVehNuevo = new servicio.gVehNuevo();
+                    servicio.gRasMerc gRasMerc = new servicio.gRasMerc();
+                    servicio.gCamEsp gCamEsp = new servicio.gCamEsp();
+                    servicio.gGrupAdi gGrupAdi = new servicio.gGrupAdi();
+                    servicio.gGrupEner gGrupEner = new servicio.gGrupEner();
+                    servicio.gGrupSeg gGrupSeg = new servicio.gGrupSeg();
+                    servicio.gGrupPolSeg gGrupPolSeg = new servicio.gGrupPolSeg();
+                    servicio.gGrupPolSeg[] gGrupPolSeg1 = new servicio.gGrupPolSeg[1];
+                    servicio.gGrupSup gGrupSup = new servicio.gGrupSup();
+                    servicio.gTransp gTransp = new servicio.gTransp();
+                    servicio.gCamEnt gCamEnt = new servicio.gCamEnt();
+                    servicio.gCamEnt[] gCamEnt1 = new servicio.gCamEnt[1];
+                    servicio.gCamSal gCamSal = new servicio.gCamSal();
+                    servicio.gCamTrans gCamTrans = new servicio.gCamTrans();
+                    servicio.gVehTras gVehTras = new servicio.gVehTras();
+                    servicio.gVehTras[] gVehTras1 = new servicio.gVehTras[1];
+                    servicio.gTotSub gTotSub = new servicio.gTotSub();
+                    servicio.gCamGen gCamGen = new servicio.gCamGen();
+                    servicio.gCamCarg gCamCarg = new servicio.gCamCarg();
+                    servicio.gCamDEAsoc gCamDEAsoc = new servicio.gCamDEAsoc();
+                    servicio.gCamDEAsoc[] gCamDEAsoc1 = new servicio.gCamDEAsoc[1];
+                    servicio.gCamFuFD gCamFuFD = new servicio.gCamFuFD();
+                    servicio.docAsociado docAsociado = new servicio.docAsociado();
+                    servicio.docAsociado[] docAsociado1 = new servicio.docAsociado[1];
+                    servicio.parametrosProcesamiento parametros = new servicio.parametrosProcesamiento();
+                    servicio.resultadoProcesamiento[] resultadoProcesamiento = new servicio.resultadoProcesamiento[1];
+                    servicio.documentoElectronicoGenerado[] documentoElectronicoGenerado = new servicio.documentoElectronicoGenerado[1];
+                    #region LINEAS
+                    //linea 2
+                    servicio.gCamItem gCamItem2 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem2 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem2 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA2 = new servicio.gCamIVA();
+                    //linea 3
+                    servicio.gCamItem gCamItem3 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem3 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem3 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA3 = new servicio.gCamIVA();
+                    //linea 4
+                    servicio.gCamItem gCamItem4 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem4 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem4 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA4 = new servicio.gCamIVA();
+                    //linea 5
+                    servicio.gCamItem gCamItem5 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem5 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem5 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA5 = new servicio.gCamIVA();
+                    //linea 6
+                    servicio.gCamItem gCamItem6 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem6 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem6 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA6 = new servicio.gCamIVA();
+                    //linea 7
+                    servicio.gCamItem gCamItem7 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem7 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem7 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA7 = new servicio.gCamIVA();
+                    //linea 8
+                    servicio.gCamItem gCamItem8 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem8 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem8 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA8 = new servicio.gCamIVA();
+                    //linea 9
+                    servicio.gCamItem gCamItem9 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem9 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem9 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA9 = new servicio.gCamIVA();
+                    //linea 10
+                    servicio.gCamItem gCamItem10 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem10 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem10 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA10 = new servicio.gCamIVA();
+                    //linea11
+                    servicio.gCamItem gCamItem11 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem11 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem11 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA11 = new servicio.gCamIVA();
+                    //linea 12
+                    servicio.gCamItem gCamItem12 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem12 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem12 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA12 = new servicio.gCamIVA();
+                    //linea 13
+                    servicio.gCamItem gCamItem13 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem13 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem13 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA13 = new servicio.gCamIVA();
+                    //linea 14
+                    servicio.gCamItem gCamItem14 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem14 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem14 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA14 = new servicio.gCamIVA();
+                    //linea 15
+                    servicio.gCamItem gCamItem15 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem15 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem15 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA15 = new servicio.gCamIVA();
+                    //linea 16
+                    servicio.gCamItem gCamItem16 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem16 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem16 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA16 = new servicio.gCamIVA();
+                    //linea 17
+                    servicio.gCamItem gCamItem17 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem17 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem17 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA17 = new servicio.gCamIVA();
+                    //linea 18
+                    servicio.gCamItem gCamItem18 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem18 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem18 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA18 = new servicio.gCamIVA();
+                    //linea 19
+                    servicio.gCamItem gCamItem19 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem19 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem19 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA19 = new servicio.gCamIVA();
+                    //linea 20
+                    servicio.gCamItem gCamItem20 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem20 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem20 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA20 = new servicio.gCamIVA();
+                    //linea 21
+                    servicio.gCamItem gCamItem21 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem21 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem21 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA21 = new servicio.gCamIVA();
+                    //linea 22
+                    servicio.gCamItem gCamItem22 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem22 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem22 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA22 = new servicio.gCamIVA();
+                    //linea 23
+                    servicio.gCamItem gCamItem23 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem23 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem23 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA23 = new servicio.gCamIVA();
+                    //linea 24
+                    servicio.gCamItem gCamItem24 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem24 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem24 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA24 = new servicio.gCamIVA();
+                    //linea 25
+                    servicio.gCamItem gCamItem25 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem25 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem25 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA25 = new servicio.gCamIVA();
+                    //linea 26
+                    servicio.gCamItem gCamItem26 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem26 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem26 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA26 = new servicio.gCamIVA();
+                    //linea 27
+                    servicio.gCamItem gCamItem27 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem27 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem27 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA27 = new servicio.gCamIVA();
+                    //linea 28
+                    servicio.gCamItem gCamItem28 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem28 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem28 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA28 = new servicio.gCamIVA();
+                    //linea 29
+                    servicio.gCamItem gCamItem29 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem29 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem29 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA29 = new servicio.gCamIVA();
+                    //linea 30
+                    servicio.gCamItem gCamItem30 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem30 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem30 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA30 = new servicio.gCamIVA();
+                    //linea 31
+                    servicio.gCamItem gCamItem31 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem31 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem31 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA31 = new servicio.gCamIVA();
+                    //linea 32
+                    servicio.gCamItem gCamItem32 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem32 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem32 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA32 = new servicio.gCamIVA();
+                    //linea 33
+                    servicio.gCamItem gCamItem33 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem33 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem33 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA33 = new servicio.gCamIVA();
+                    //linea 34
+                    servicio.gCamItem gCamItem34 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem34 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem34 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA34 = new servicio.gCamIVA();
+                    //linea 35
+                    servicio.gCamItem gCamItem35 = new servicio.gCamItem();
+                    servicio.gValorItem gValorItem35 = new servicio.gValorItem();
+                    servicio.gValorRestaItem gValorRestaItem35 = new servicio.gValorRestaItem();
+                    servicio.gCamIVA gCamIVA35 = new servicio.gCamIVA();
+                    #endregion
+                    //armamos la estructura que enviaremos con los datos
+                    //gOpeDE
+                    gOpeDE.iTipEmi = "1";
+                    gOpeDE.dInfoFisc = "Remision";
+                    string oper = oDatos.Fields.Item(25).Value.ToString();
+                    if (!string.IsNullOrEmpty(infoadicional))
+                    {
+                        gOpeDE.dInfoEmi = infoadicional;
+                    }
+                    //gTimb
+                    gTimb.iTiDE = "7";
+                    gTimb.dNumTim = timbrado;// timbrado;
+                    gTimb.dEst = esta;// esta;
+                    gTimb.dPunExp = pun;// pun;
+                    gTimb.dNumDoc = folio.ToString("D7");
+                    //gDatGralOpe
+                    //armamos el formato de la fecha
+                    string hora = oDatos.Fields.Item(21).Value.ToString();
+                    DateTime fe = Convert.ToDateTime(oDatos.Fields.Item(7).Value.ToString());
+                    string fecha = fe.ToString("yyyy-MM-dd") + "T" + hora; //oDatos.Fields.Item(7).Value.ToString("yyyy-MM-dd") + "T" + hora;        
+                    gDatGralOpe.dFeEmiDE = DateTime.Parse(fecha);//DateTime.Parse("2022-11-01T17:41:55");
+                    gDatGralOpe.dFeEmiDESpecified = true;
+                    //gEmis
+                    gEmis.dRucEm = rucE;
+                    gEmis.dDVEmi = dvE;
+                    //gEmis.dDirEmi = "";//la direccion del punto de expedicion           
+                    //gDatRec
+                    gDatRec.iNatRec = oDatos.Fields.Item(26).Value.ToString();
+                    gDatRec.iTiOpe = oDatos.Fields.Item(25).Value.ToString();
+                    if (!string.IsNullOrEmpty(correo))
+                    {
+                        gDatRec.dEmailRec = correo;
+                    }
+                    string pais = oDatos.Fields.Item(16).Value.ToString();
+                    if (string.IsNullOrEmpty(pais))
+                    {
+                        gDatRec.cPaisRec = "PRY";
+                    }
+                    else
+                    {
+                        gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
+                    }
+                    //gDatRec.cPaisRec = oDatos.Fields.Item(16).Value.ToString();
+                    gDatRec.dDesPaisRe = oDatos.Fields.Item(38).Value.ToString();
+
+                    gDatRec.dNomRec = oDatos.Fields.Item(3).Value.ToString();//"BIGGIE S.A - LAMBARE ROA BASTOS";
+                    string direRec = oDatos.Fields.Item(5).Value.ToString();
+                    string newdireRec = null;
+                    if (!Regex.IsMatch(direRec, @"^[a-zA-Z-0-9]+$") == true)
+                    {
+                        newdireRec = Regex.Replace(direRec, @"[^0-9a-zA-Z ]+", "");
+                    }
+                    else
+                    {
+                        newdireRec = direRec;
+                    }
+                    gDatRec.dDirRec = newdireRec;// oDatos.Fields.Item(5).Value.ToString();//"AVDA AUGUSTO ROA BASTOS esq San Marcos";
+                    gDatRec.dNumCasRec = "0";
+                    gDatRec.dTelRec = oDatos.Fields.Item(6).Value.ToString();//"021615257";
+                    if (oDatos.Fields.Item(16).Value.ToString() == "PRY")
+                    {
+                        gDatRec.dRucRec = ruc;
+                        gDatRec.dDVRec = dv;
+                        gDatRec.cDepRec = rec_dep;
+                        gDatRec.cDisRec = rec_dist;
+                        gDatRec.cCiuRec = rec_loc;
+                        gDatRec.iTiContRec = oDatos.Fields.Item(27).Value.ToString();
+                    }
+                    //gCamSal
+                    gCamSal.dDirLocSal = oDatos.Fields.Item(39).Value.ToString();
+                    gCamSal.dNumCasSal = "0";
+                    //gCamSal.dComp1Sal =  "aviadores del chaco";
+                    gCamSal.cDepSal = sal_dep;
+                    gCamSal.cDisSal = sal_dist;
+                    gCamSal.cCiuSal = sal_loc;
+                    //gCamEnt
+                    gCamEnt.dDirLocEnt = newdireRec;// oDatos.Fields.Item(5).Value.ToString(); //"santa teresa";
+                    gCamEnt.dNumCasEnt = "0";
+                    gCamEnt.cDepEnt = rec_dep;
+                    gCamEnt.cDisEnt = rec_dist;
+                    gCamEnt.cCiuEnt = rec_loc;
+                    gCamEnt1[0] = gCamEnt;
+
+                    //LICITACION
+                    #region LICITACION
+                    if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                    {
+                        Recordset oLicitacion;
+                        oLicitacion = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oLicitacion.DoQuery("SELECT \"U_dModCont\",\"U_dEntCont\",\"U_dAnoCont\",\"U_dSecCont\",\"U_dFeCodCont\" FROM \"@LICITACION\" WHERE \"U_LICI\"='" + CodLicitacion + "'");
+
+                        gCompPub.dModCont = oLicitacion.Fields.Item(0).Value.ToString();//"LP";
+                        gCompPub.dEntCont = oLicitacion.Fields.Item(1).Value.ToString(); //"12009";
+                        gCompPub.dAnoCont = oLicitacion.Fields.Item(2).Value.ToString(); //"22";
+                        int sec = int.Parse(oLicitacion.Fields.Item(2).Value.ToString());
+                        gCompPub.dSecCont = sec.ToString("D7");// oLicitacion.Fields.Item(3).Value.ToString(); //"218529";
+                        DateTime v_fechaLic = DateTime.Parse(oLicitacion.Fields.Item(4).Value.ToString());
+                        string fechalic_v = v_fechaLic.ToString("yyyy-MM-dd");
+                        gCompPub.dFeCodCont = DateTime.Parse(fechalic_v);//DateTime.Parse("2022-08-31");
+                        gCompPub.dFeCodContSpecified = true;
+                        gCamFE.gCompPub = gCompPub;
+                        //gDtipDE.gCamFE = gCamFE;
+
+
+                    }
+                    #endregion
+
+
+                    if (oDatos.Fields.Item(34).Value.ToString() == varE)
+                    {
+                        gTransp.iTipTrans = "1";
+                        gTransp.dDesTipTrans = "Propio";
+                    }
+                    else
+                    {
+                        gTransp.iTipTrans = "2";
+                        gTransp.dDesTipTrans = "Tercero";
+                    }
+                    gTransp.iModTrans = "1";
+                    gTransp.iRespFlete = ResFlete;
+                    gTransp.dIniTras = fe;
+                    gTransp.dIniTrasSpecified = true;
+                    gTransp.dFinTras = fe;
+                    gTransp.dFinTrasSpecified = true;
+                    //gVehTras
+                    //gTransp.gVehTras = gVehTras1;
+                    gVehTras1[0] = gVehTras;
+                    gVehTras.dTiVehTras = "Terrestre";
+                    gVehTras.dMarVeh = oDatos.Fields.Item(30).Value.ToString();
+                    gVehTras.dTipIdenVeh = "2";
+                    gVehTras.dNroMatVeh = oDatos.Fields.Item(29).Value.ToString();
+                    //gCamTrans
+                    gCamTrans.iNatTrans = oDatos.Fields.Item(32).Value.ToString();
+                    gCamTrans.dNomTrans = oDatos.Fields.Item(33).Value.ToString();
+                    //deconstruimos el RUC del transportista
+                    string rucCam = null;
+                    string dvCam = null;
+                    if (oDatos.Fields.Item(32).Value.ToString() == "1")
+                    {
+                        string varCam = oDatos.Fields.Item(34).Value.ToString();
+                        int indexCam = varCam.IndexOf("-");
+                        int canCam = oDatos.Fields.Item(34).Value.ToString().Length;
+                        rucCam = oDatos.Fields.Item(34).Value.ToString().Remove(indexCam, canCam - indexCam);
+                        dvCam = oDatos.Fields.Item(34).Value.ToString().Remove(0, indexCam + 1);
+                    }
+                    string paisTrans = oDatos.Fields.Item(35).Value.ToString();
+                    if (paisTrans.Equals("PRY"))
+                    {
+                        gCamTrans.dRucTrans = rucCam;
+                        gCamTrans.dDVTrans = dvCam;
+                    }
+                    else
+                    {
+                        gCamTrans.dNumIDTrans = oDatos.Fields.Item(34).Value.ToString();
+                        gCamTrans.iTipIDTrans = "3";
+                        gCamTrans.dDTipIDTrans = "Cédula extranjera";
+                    }
+                    gCamTrans.cNacTrans = oDatos.Fields.Item(35).Value.ToString();
+                    gCamTrans.dDesNacTrans = oDatos.Fields.Item(40).Value.ToString();
+                    gCamTrans.dDomFisc = oDatos.Fields.Item(41).Value.ToString();
+                    gCamTrans.dNumIDChof = oDatos.Fields.Item(36).Value.ToString();
+                    gCamTrans.dNomChof = oDatos.Fields.Item(37).Value.ToString();
+                    string direChofer = oDatos.Fields.Item(42).Value.ToString();
+                    string newdireChofer = null;
+                    if (!Regex.IsMatch(direChofer, @"^[a-zA-Z-0-9]+$") == true)
+                    {
+                        newdireChofer = Regex.Replace(direChofer, @"[^0-9a-zA-Z ]+", "");
+                    }
+                    else
+                    {
+                        newdireChofer = direChofer;
+                    }
+                    gCamTrans.dDirChof = newdireChofer;// oDatos.Fields.Item(42).Value.ToString();
+                                                       //gCamNRE
+                    string motivo = null;
+                    string codmotivo = null;
+                    if (tablacab.Equals("OWTR"))
+                    {
+                        codmotivo = "7";
+                        motivo = "Traslado entre locales de la empresa";
+                    }
+                    else
+                    {
+                        codmotivo = "1";
+                        motivo = "Traslado por ventas";
+                    }
+                    gCamNRE.iMotEmiNR = codmotivo;// "1";
+                    gCamNRE.dDesMotEmiNR = motivo;// "Traslado por ventas";
+                    gCamNRE.iRespEmiNR = "1";
+                    gCamNRE.dDesRespEmiNR = "Emisor de la factura";
+                    gCamNRE.dKmR = "3";
+                    //gCamItem
+                    int f = 0;
+                    //recorremos el recordset y mandamos los datos del detalle al objeto
+                    while (!oDatos.EoF)
+                    {
+                        #region DETALLE
+                        if (f == 0)
+                        {
+                            gCamItem.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();//"024";
+                                double dncpNum = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem.dDncpG = dncpNum.ToString();
+                            }
+                            gCamItem1[f] = gCamItem;
+                        }
+                        if (f == 1)
+                        {
+                            decimal ll = decimal.Parse(oDatos.Fields.Item(13).Value.ToString());
+                            gCamItem2.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem2.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem2.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem2.dDncpE = oLiciDet.Fields.Item(0).Value.ToString();// "024";
+                                double dncpNum2 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem2.dDncpG = dncpNum2.ToString();
+                            }
+                            gCamItem1[f] = gCamItem2;
+                        }
+                        if (f == 2)
+                        {
+
+                            gCamItem3.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem3.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem3.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem3.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum3 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem3.dDncpG = dncpNum3.ToString();
+                            }
+                            gCamItem1[f] = gCamItem3;
+                        }
+                        if (f == 3)
+                        {
+                            gCamItem4.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem4.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem4.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem4.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum4 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem4.dDncpG = dncpNum4.ToString();
+                            }
+                            gCamItem1[f] = gCamItem4;
+                        }
+                        if (f == 4)
+                        {
+                            gCamItem5.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem5.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem5.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem5.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum5 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem5.dDncpG = dncpNum5.ToString();
+                            }
+                            gCamItem1[f] = gCamItem5;
+                        }
+                        if (f == 5)
+                        {
+                            gCamItem6.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem6.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem6.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem6.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum6 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem6.dDncpG = dncpNum6.ToString();
+                            }
+                            gCamItem1[f] = gCamItem6;
+                        }
+                        if (f == 6)
+                        {
+                            gCamItem7.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem7.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem7.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem7.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); // "024";
+                                double dncpNum7 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem7.dDncpG = dncpNum7.ToString();
+                            }
+                            gCamItem1[f] = gCamItem7;
+                        }
+                        if (f == 7)
+                        {
+                            gCamItem8.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem8.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem8.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem8.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum8 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem8.dDncpG = dncpNum8.ToString();
+                            }
+                            gCamItem1[f] = gCamItem8;
+                        }
+                        if (f == 8)
+                        {
+                            gCamItem9.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem9.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem9.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem9.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum9 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem9.dDncpG = dncpNum9.ToString();
+                            }
+                            gCamItem1[f] = gCamItem9;
+                        }
+                        if (f == 9)
+                        {
+                            gCamItem10.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem10.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem10.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem10.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum10 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem10.dDncpG = dncpNum10.ToString();
+                            }
+                            gCamItem1[f] = gCamItem10;
+                        }
+                        if (f == 10)
+                        {
+                            gCamItem11.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem11.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem11.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem11.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum11 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem11.dDncpG = dncpNum11.ToString();
+                            }
+                            gCamItem1[f] = gCamItem11;
+                        }
+                        if (f == 11)
+                        {
+                            gCamItem12.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem12.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem12.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem12.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum12 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem12.dDncpG = dncpNum12.ToString();
+                            }
+                            gCamItem1[f] = gCamItem12;
+                        }
+                        if (f == 12)
+                        {
+                            gCamItem13.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem13.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem13.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem13.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum13 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem13.dDncpG = dncpNum13.ToString();
+                            }
+                            gCamItem1[f] = gCamItem13;
+                        }
+                        if (f == 13)
+                        {
+                            gCamItem14.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem14.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem14.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem14.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum14 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem14.dDncpG = dncpNum14.ToString();
+                            }
+                            gCamItem1[f] = gCamItem14;
+                        }
+                        if (f == 14)
+                        {
+                            gCamItem15.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem15.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem15.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem15.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum15 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem15.dDncpG = dncpNum15.ToString();
+                            }
+                            gCamItem1[f] = gCamItem15;
+                        }
+                        if (f == 15)
+                        {
+                            gCamItem16.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem16.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem16.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem16.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum16 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem16.dDncpG = dncpNum16.ToString();
+                            }
+                            gCamItem1[f] = gCamItem16;
+                        }
+                        if (f == 16)
+                        {
+                            gCamItem17.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem17.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem17.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem17.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum17 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem17.dDncpG = dncpNum17.ToString();
+                            }
+                            gCamItem1[f] = gCamItem17;
+                        }
+                        if (f == 17)
+                        {
+                            gCamItem18.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem18.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem18.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem18.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum18 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem18.dDncpG = dncpNum18.ToString();
+                            }
+                            gCamItem1[f] = gCamItem18;
+                        }
+                        if (f == 18)
+                        {
+                            gCamItem19.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem19.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem19.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem19.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum19 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem19.dDncpG = dncpNum19.ToString();
+                            }
+                            gCamItem1[f] = gCamItem19;
+                        }
+                        if (f == 19)
+                        {
+                            gCamItem20.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem20.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem20.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem20.dDncpE = oLiciDet.Fields.Item(0).Value.ToString(); //"024";
+                                double dncpNum20 = double.Parse(oLiciDet.Fields.Item(1).Value.ToString());//50112001;
+                                gCamItem20.dDncpG = dncpNum20.ToString();
+                            }
+                            gCamItem1[f] = gCamItem20;
+                        }
+                        if (f == 20)
+                        {
+                            gCamItem21.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem21.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem21.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                Recordset oLiciDet;
+                                oLiciDet = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                                oLiciDet.DoQuery("SELECT T1.\"U_dDncpE\",T1.\"U_dDncpG\" FROM \"@LICITACION\" T0 INNER JOIN \"@DETALLE_LICITACION\" T1 ON T0.\"DocEntry\"=T1.\"DocEntry\" WHERE T0.\"U_LICI\"='" + CodLicitacion + "' AND T1.\"U_ARTICULO\"='" + oDatos.Fields.Item(11).Value.ToString() + "' ");
+
+                                gCamItem21.dDncpE = "024";
+                                int dncpNum21 = 50112001;
+                                gCamItem21.dDncpG = dncpNum21.ToString();
+                            }
+                            gCamItem1[f] = gCamItem21;
+                        }
+                        if (f == 21)
+                        {
+                            gCamItem22.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem22.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem22.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem22.dDncpE = "024";
+                                int dncpNum22 = 50112001;
+                                gCamItem22.dDncpG = dncpNum22.ToString();
+                            }
+                            gCamItem1[f] = gCamItem22;
+                        }
+                        if (f == 22)
+                        {
+                            gCamItem23.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem23.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem23.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem23.dDncpE = "024";
+                                int dncpNum23 = 50112001;
+                                gCamItem23.dDncpG = dncpNum23.ToString("");
+                            }
+                            gCamItem1[f] = gCamItem23;
+                        }
+                        if (f == 23)
+                        {
+                            gCamItem24.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem24.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem24.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem24.dDncpE = "024";
+                                int dncpNum24 = 50112001;
+                                gCamItem24.dDncpG = dncpNum24.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem24;
+                        }
+                        if (f == 24)
+                        {
+                            gCamItem25.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem25.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem25.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem25.dDncpE = "024";
+                                int dncpNum25 = 50112001;
+                                gCamItem25.dDncpG = dncpNum25.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem25;
+                        }
+                        if (f == 25)
+                        {
+                            gCamItem26.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem26.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem26.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem26.dDncpE = "024";
+                                int dncpNum26 = 50112001;
+                                gCamItem26.dDncpG = dncpNum26.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem26;
+                        }
+                        if (f == 26)
+                        {
+                            gCamItem27.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem27.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem27.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem27.dDncpE = "024";
+                                int dncpNum27 = 50112001;
+                                gCamItem27.dDncpG = dncpNum27.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem27;
+                        }
+                        if (f == 27)
+                        {
+                            gCamItem28.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem28.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem28.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem28.dDncpE = "024";
+                                int dncpNum28 = 50112001;
+                                gCamItem28.dDncpG = dncpNum28.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem28;
+                        }
+                        if (f == 28)
+                        {
+                            gCamItem29.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem29.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem29.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem29.dDncpE = "024";
+                                int dncpNum29 = 50112001;
+                                gCamItem29.dDncpG = dncpNum29.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem29;
+                        }
+                        if (f == 29)
+                        {
+                            gCamItem30.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem30.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem30.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem30.dDncpE = "024";
+                                int dncpNum30 = 50112001;
+                                gCamItem30.dDncpG = dncpNum30.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem30;
+                        }
+                        if (f == 30)
+                        {
+                            gCamItem31.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem31.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem31.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem31.dDncpE = "024";
+                                int dncpNum31 = 50112001;
+                                gCamItem31.dDncpG = dncpNum31.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem31;
+                        }
+                        if (f == 31)
+                        {
+                            gCamItem32.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem32.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem32.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem32.dDncpE = "024";
+                                int dncpNum32 = 50112001;
+                                gCamItem32.dDncpG = dncpNum32.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem32;
+                        }
+                        if (f == 32)
+                        {
+                            gCamItem33.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem33.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem33.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem33.dDncpE = "024";
+                                int dncpNum33 = 50112001;
+                                gCamItem33.dDncpG = dncpNum33.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem33;
+                        }
+                        if (f == 33)
+                        {
+                            gCamItem34.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem34.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem34.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem34.dDncpE = "024";
+                                int dncpNum34 = 50112001;
+                                gCamItem34.dDncpG = dncpNum34.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem34;
+                        }
+                        if (f == 34)
+                        {
+                            gCamItem35.dCodInt = oDatos.Fields.Item(11).Value.ToString(); //"PV1014";
+                            gCamItem35.dDesProSer = oDatos.Fields.Item(12).Value.ToString(); //"NACHOS SABOR QUESO 300 GRS";
+                            gCamItem35.dCantProSer = decimal.Parse(oDatos.Fields.Item(13).Value.ToString()); //12;
+                            if (oDatos.Fields.Item(25).Value.ToString() == "3")
+                            {
+                                gCamItem35.dDncpE = "024";
+                                int dncpNum35 = 50112001;
+                                gCamItem35.dDncpG = dncpNum35.ToString("D8");
+                            }
+                            gCamItem1[f] = gCamItem35;
+                        }
+                        #endregion
+
+                        f++;
+                        oDatos.MoveNext();
+                        if (false == oCompany.InTransaction)
+                        {
+                            oCompany.StartTransaction();
+                        }
+                    }
                     if (false == oCompany.InTransaction)
                     {
                         oCompany.StartTransaction();
                     }
-                }
-                if (false == oCompany.InTransaction)
-                {
-                    oCompany.StartTransaction();
-                }
-                //los parámetro de procesamientos
-                parametros.retornarKuDE = true;
-                parametros.retornarXmlFirmado = true;
-                parametros.templateKuDE = "NOTA_REMISION";
-                parametros.cicloFacturacion = fe.ToString("yyyy-MM-dd");
-                //mandamos los sub ojetos a los objetos principales
-                DE.gOpeDE = gOpeDE;
-                DE.gTimb = gTimb;
-                DE.gDatGralOpe = gDatGralOpe;
-                DE.gDatGralOpe.gEmis = gEmis;
-                DE.gDatGralOpe.gDatRec = gDatRec;
-                DE.gDtipDE = gDtipDE;
-                gDtipDE.gTransp = gTransp;
-                //gDtipDE.gCamCond = gCamCond;
-                gDtipDE.gCamItem = gCamItem1;
-                gDtipDE.gCamNRE = gCamNRE;
-                gTransp.gCamTrans = gCamTrans;
-                gTransp.gCamSal = gCamSal;
-                gTransp.gCamEnt = gCamEnt1;
-                gTransp.gVehTras = gVehTras1;
-                rDE.DE = DE;
-                procesarDocumento.rDE = rDE;
-                procesarDocumento.parametrosProcesamiento = parametros;
-                procesarDocumento2[0] = procesarDocumento;
-                procesarFactura.procesarDocumento = procesarDocumento2;
-                //procesamos el documento
-                resultadoProcesamiento = cliente.procesarLotePorFactura(procesarFactura);
-                //obtenemos el resultado
-                documentoElectronicoGenerado = resultadoProcesamiento[0].documentoElectronicoGenerado;
-                dynamic resultadoOK = resultadoProcesamiento[0].ok;
-                //consultamos si el resultado fue TRUE O FALSE
-                if (true == oCompany.InTransaction)
-                {
-                    oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
-                }
-                if (resultadoOK == false)
-                {
-                    string mensajeError = resultadoProcesamiento[0].mensajeError;
-                    string numDocError = resultadoProcesamiento[0].numDocumentoError.ToString();
-                    //proceso para grabar en sap
-                    Recordset oACtualizarDoc;
-                    oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_MensajeError\"='" + mensajeError.Replace("'", "") + "',\"U_ESTADO\"='NO PROCESADO',\"U_FechaT\"='" + fecha + "' where \"DocNum\"='" + codigo + "'");
-                    //MessageBox.Show("Remision no procesada", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    SBO_Application.SetStatusBarMessage("Remision creado con error de la SET!!", SAPbouiCOM.BoMessageTime.bmt_Short, true);
-                }
-                else
-                {
-                    //actualizamos el folio de la factura
-                    Recordset oActFolio;
-                    oActFolio = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActFolio.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "',\"U_TIMB\"='" + timbrado + "' where \"DocNum\"='" + codigo + "'");
-                    //actualizamos el folio del asiento
-                    Recordset oActAsiento;
-                    oActAsiento = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActAsiento.DoQuery("UPDATE OJDT SET \"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "' where \"BaseRef\"='" + codigo + "' AND \"TransId\"='" + transId + "'");
-                    //actualizar el estado del documento si es B2G
-                    if (v_ope.Equals("3"))
+                    //los parámetro de procesamientos
+                    parametros.retornarKuDE = true;
+                    parametros.retornarXmlFirmado = true;
+                    parametros.templateKuDE = "NOTA_REMISION";
+                    parametros.cicloFacturacion = fe.ToString("yyyy-MM-dd");
+                    //mandamos los sub ojetos a los objetos principales
+                    DE.gOpeDE = gOpeDE;
+                    DE.gTimb = gTimb;
+                    DE.gDatGralOpe = gDatGralOpe;
+                    DE.gDatGralOpe.gEmis = gEmis;
+                    DE.gDatGralOpe.gDatRec = gDatRec;
+                    DE.gDtipDE = gDtipDE;
+                    gDtipDE.gTransp = gTransp;
+                    //gDtipDE.gCamCond = gCamCond;
+                    gDtipDE.gCamItem = gCamItem1;
+                    gDtipDE.gCamNRE = gCamNRE;
+                    gTransp.gCamTrans = gCamTrans;
+                    gTransp.gCamSal = gCamSal;
+                    gTransp.gCamEnt = gCamEnt1;
+                    gTransp.gVehTras = gVehTras1;
+                    rDE.DE = DE;
+                    procesarDocumento.rDE = rDE;
+                    procesarDocumento.parametrosProcesamiento = parametros;
+                    procesarDocumento2[0] = procesarDocumento;
+                    procesarFactura.procesarDocumento = procesarDocumento2;
+                    //procesamos el documento
+                    resultadoProcesamiento = cliente.procesarLotePorFactura(procesarFactura);
+                    //obtenemos el resultado
+                    documentoElectronicoGenerado = resultadoProcesamiento[0].documentoElectronicoGenerado;
+                    dynamic resultadoOK = resultadoProcesamiento[0].ok;
+                    //consultamos si el resultado fue TRUE O FALSE
+                    if (true == oCompany.InTransaction)
                     {
-                        Recordset oActEstado;
-                        oActEstado = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                        oActEstado.DoQuery("UPDATE " + tablacab + " SET \"Printed\"='Y' where \"DocNum\"='" + codigo + "'");
+                        oCompany.EndTransaction(BoWfTransOpt.wf_RollBack);
                     }
-
-                    //actualizamos la numeracion de la serie           
-                    Recordset oActSerie;
-                    oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"='" + serieremi + "'");
-
-                    dynamic kude = documentoElectronicoGenerado[0].kuDE;
-                    string Kude64 = Convert.ToBase64String(kude);
-                    dynamic xmlfirmado = documentoElectronicoGenerado[0].xmlFirmado;
-                    string xmlfirmado64 = Convert.ToBase64String(xmlfirmado);
-                    //extraemos el CDC del XML
-                    dynamic json = Encoding.UTF8.GetString(xmlfirmado);
-                    string[] indice = json.Split('>');
-                    int c = 0;
-                    string cdc = null;
-                    //string QR = null;
-                    foreach (string indice2 in indice)
+                    if (resultadoOK == false)
                     {
-                        if (c == 3)
+                        string mensajeError = resultadoProcesamiento[0].mensajeError;
+                        string numDocError = resultadoProcesamiento[0].numDocumentoError.ToString();
+                        //proceso para grabar en sap
+                        Recordset oACtualizarDoc;
+                        oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_MensajeError\"='" + mensajeError.Replace("'", "") + "',\"U_ESTADO\"='NO PROCESADO',\"U_FechaT\"='" + fecha + "' where \"DocNum\"='" + codigo + "'");
+                        //MessageBox.Show("Remision no procesada", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        SBO_Application.SetStatusBarMessage("Remision creado con error de la SET!!", SAPbouiCOM.BoMessageTime.bmt_Short, true);
+                    }
+                    else
+                    {
+                        //actualizamos el folio de la factura
+                        Recordset oActFolio;
+                        oActFolio = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActFolio.DoQuery("UPDATE " + tablacab + " SET \"U_ESTA\"='" + esta + "',\"U_PEMI\"='" + pun + "',\"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "',\"U_TIMB\"='" + timbrado + "' where \"DocNum\"='" + codigo + "'");
+                        //actualizamos el folio del asiento
+                        Recordset oActAsiento;
+                        oActAsiento = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActAsiento.DoQuery("UPDATE OJDT SET \"FolioPref\"='" + esta + "',\"FolioNum\"='" + folio.ToString() + "' where \"BaseRef\"='" + codigo + "' AND \"TransId\"='" + transId + "'");
+                        //actualizar el estado del documento si es B2G
+                        if (v_ope.Equals("3"))
                         {
-                            cdc = indice2.Replace("<DE Id=", "").Replace("\"", "").Replace(@"""", "");
+                            Recordset oActEstado;
+                            oActEstado = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                            oActEstado.DoQuery("UPDATE " + tablacab + " SET \"Printed\"='Y' where \"DocNum\"='" + codigo + "'");
                         }
-                        //if (c == 250)
-                        //{
-                        //    QR = indice2.Replace("</dCarQR", "");
-                        //}
-                        c++;
-                    }
-                    string id = documentoElectronicoGenerado[0].id;
-                    //extraemos el QR del XML
-                    string pp = Encoding.UTF8.GetString(xmlfirmado);
-                    int ind1 = pp.IndexOf("<dCarQR>") + "<dCarQR>".Length;
-                    int ind2 = pp.IndexOf("</dCarQR>");
-                    int carateres = ind2 - ind1;
-                    string QR = pp.Substring(ind1, carateres);
 
-                    //proceso para grabar en sap
-                    Recordset oACtualizarDoc;
-                    oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_KUDE\"='" + Kude64 + "',\"U_XMLFIRMADO\"='" + xmlfirmado64 + "',\"U_ID\"='" + id + "',\"U_ESTADO\"='PROCESADO',\"U_CDC\"='" + cdc + "',\"U_FechaT\"='" + fecha + "',\"U_CODIGOQR\"='" + QR + "'  where \"DocNum\"='" + codigo + "'");
-                    //MessageBox.Show("Remision creada con exito", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    SBO_Application.StatusBar.SetText("Documento creado con exito!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
-                    //SBO_Application.SetStatusBarMessage("Remision creado con exito!!", SAPbouiCOM.BoMessageTime.bmt_Short, false);
+                        //actualizamos la numeracion de la serie           
+                        Recordset oActSerie;
+                        oActSerie = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oActSerie.DoQuery("UPDATE NNM1 SET \"NextFolio\"='" + folio + "' where \"Series\"='" + serieremi + "'");
+
+                        dynamic kude = documentoElectronicoGenerado[0].kuDE;
+                        string Kude64 = Convert.ToBase64String(kude);
+                        dynamic xmlfirmado = documentoElectronicoGenerado[0].xmlFirmado;
+                        string xmlfirmado64 = Convert.ToBase64String(xmlfirmado);
+                        //extraemos el CDC del XML
+                        dynamic json = Encoding.UTF8.GetString(xmlfirmado);
+                        string[] indice = json.Split('>');
+                        int c = 0;
+                        string cdc = null;
+                        //string QR = null;
+                        foreach (string indice2 in indice)
+                        {
+                            if (c == 3)
+                            {
+                                cdc = indice2.Replace("<DE Id=", "").Replace("\"", "").Replace(@"""", "");
+                            }
+                            //if (c == 250)
+                            //{
+                            //    QR = indice2.Replace("</dCarQR", "");
+                            //}
+                            c++;
+                        }
+                        string id = documentoElectronicoGenerado[0].id;
+                        //extraemos el QR del XML
+                        string pp = Encoding.UTF8.GetString(xmlfirmado);
+                        int ind1 = pp.IndexOf("<dCarQR>") + "<dCarQR>".Length;
+                        int ind2 = pp.IndexOf("</dCarQR>");
+                        int carateres = ind2 - ind1;
+                        string QR = pp.Substring(ind1, carateres);
+
+                        //proceso para grabar en sap
+                        Recordset oACtualizarDoc;
+                        oACtualizarDoc = (Recordset)oCompany.GetBusinessObject(BoObjectTypes.BoRecordset);
+                        oACtualizarDoc.DoQuery("UPDATE " + tablacab + " SET \"U_KUDE\"='" + Kude64 + "',\"U_XMLFIRMADO\"='" + xmlfirmado64 + "',\"U_ID\"='" + id + "',\"U_ESTADO\"='PROCESADO',\"U_CDC\"='" + cdc + "',\"U_FechaT\"='" + fecha + "',\"U_CODIGOQR\"='" + QR + "'  where \"DocNum\"='" + codigo + "'");
+                        //MessageBox.Show("Remision creada con exito", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        SBO_Application.StatusBar.SetText("Documento creado con exito!!", BoMessageTime.bmt_Medium, BoStatusBarMessageType.smt_Success);
+                        //SBO_Application.SetStatusBarMessage("Remision creado con exito!!", SAPbouiCOM.BoMessageTime.bmt_Short, false);
+                    }
                 }
+                b_doc = false;              
             }
             catch (Exception e)
             {
@@ -33495,7 +33508,7 @@ namespace BOTONSAP
                 E_QR.Value = v_qr;
                 E_OV.Item.Enabled = true;
                 E_OV.Value = code;
-                //C_Serie.Select(v_Serie, SAPbouiCOM.BoSearchKey.psk_ByDescription);
+                C_Serie.Select(v_Serie, SAPbouiCOM.BoSearchKey.psk_ByDescription);
                 C_Ope.Select(v_operacion, SAPbouiCOM.BoSearchKey.psk_ByValue);
                 C_Tra.Select(v_motivo, SAPbouiCOM.BoSearchKey.psk_ByValue);
                 C_Imp.Select(v_impafec, SAPbouiCOM.BoSearchKey.psk_ByValue);
@@ -33548,10 +33561,12 @@ namespace BOTONSAP
                     EditText C_Price = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("14").Cells.Item(filaC).Specific;
                     EditText c_PriceIva = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("20").Cells.Item(filaC).Specific;
                     EditText C_TotalLinea = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("21").Cells.Item(filaC).Specific;
+                    EditText C_almacen = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("24").Cells.Item(filaC).Specific;
                     //EditText C_TotalLineaGS = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("20").Cells.Item(filaC).Specific;
                     EditText C_UM = (SAPbouiCOM.EditText)MatrixEnt.Columns.Item("1470002145").Cells.Item(filaC).Specific;
                     SAPbouiCOM.ComboBox C_Vend = (SAPbouiCOM.ComboBox)MatrixEnt.Columns.Item("27").Cells.Item(filaC).Specific;
                     C_ItemCode.Value = v_ItemCode;
+                    C_almacen.Value = v_WhsCode;
                     C_Quantity.Value = v_Quantity.Replace(",", ".");
                     C_UM.Value = "TN";
                     C_Price.Value = v_price;
