@@ -36,6 +36,8 @@ namespace BOTONSAP
             this.LinkedButton0 = ((SAPbouiCOM.LinkedButton)(this.GetItem("Item_0").Specific));
             this.LinkedButton1 = ((SAPbouiCOM.LinkedButton)(this.GetItem("Item_1").Specific));
             this.Button0 = ((SAPbouiCOM.Button)(this.GetItem("Item_2").Specific));
+            this.ButtonCombo0 = ((SAPbouiCOM.ButtonCombo)(this.GetItem("Item_3").Specific));
+            this.Button1 = ((SAPbouiCOM.Button)(this.GetItem("Item_4").Specific));
             this.OnCustomInitialize();
 
         }
@@ -71,5 +73,7 @@ namespace BOTONSAP
         private SAPbouiCOM.LinkedButton LinkedButton0;
         private SAPbouiCOM.LinkedButton LinkedButton1;
         private SAPbouiCOM.Button Button0;
+        private SAPbouiCOM.ButtonCombo ButtonCombo0;
+        private SAPbouiCOM.Button Button1;
     }
 }

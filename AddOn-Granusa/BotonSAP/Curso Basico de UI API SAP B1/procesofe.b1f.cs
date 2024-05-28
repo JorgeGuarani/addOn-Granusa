@@ -6,10 +6,10 @@ using SAPbouiCOM.Framework;
 
 namespace BOTONSAP
 {
-    [FormAttribute("UDO_FT_NUMERACION")]
-    class numeracion : UDOFormBase
+    [FormAttribute("UDO_FT_PROCESOFE")]
+    class procesofe : UDOFormBase
     {
-        public numeracion()
+        public procesofe()
         {
         }
 
@@ -20,17 +20,18 @@ namespace BOTONSAP
         {
             this.Folder0 = ((SAPbouiCOM.Folder)(this.GetItem("Item_1").Specific));
             this.Folder1 = ((SAPbouiCOM.Folder)(this.GetItem("Item_2").Specific));
-            this.StaticText0 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_3").Specific));
-            this.EditText0 = ((SAPbouiCOM.EditText)(this.GetItem("Item_4").Specific));
+            this.StaticText0 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_4").Specific));
             this.ComboBox0 = ((SAPbouiCOM.ComboBox)(this.GetItem("Item_5").Specific));
             this.StaticText1 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_6").Specific));
-            this.StaticText2 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_7").Specific));
-            this.EditText1 = ((SAPbouiCOM.EditText)(this.GetItem("Item_8").Specific));
-            this.Button0 = ((SAPbouiCOM.Button)(this.GetItem("Item_9").Specific));
-            this.StaticText3 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_10").Specific));
-            this.EditText3 = ((SAPbouiCOM.EditText)(this.GetItem("Item_12").Specific));
-            this.EditText4 = ((SAPbouiCOM.EditText)(this.GetItem("Item_13").Specific));
-            this.StaticText4 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_14").Specific));
+            this.EditText0 = ((SAPbouiCOM.EditText)(this.GetItem("Item_7").Specific));
+            this.Button0 = ((SAPbouiCOM.Button)(this.GetItem("Item_8").Specific));
+            this.Button1 = ((SAPbouiCOM.Button)(this.GetItem("Item_9").Specific));
+            this.StaticText2 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_10").Specific));
+            this.ComboBox1 = ((SAPbouiCOM.ComboBox)(this.GetItem("Item_11").Specific));
+            this.StaticText3 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_12").Specific));
+            this.EditText1 = ((SAPbouiCOM.EditText)(this.GetItem("Item_13").Specific));
+            this.Button2 = ((SAPbouiCOM.Button)(this.GetItem("Item_14").Specific));
+            this.Button3 = ((SAPbouiCOM.Button)(this.GetItem("Item_15").Specific));
             this.OnCustomInitialize();
 
         }
@@ -51,15 +52,16 @@ namespace BOTONSAP
 
         private SAPbouiCOM.Folder Folder1;
         private SAPbouiCOM.StaticText StaticText0;
-        private SAPbouiCOM.EditText EditText0;
         private SAPbouiCOM.ComboBox ComboBox0;
         private SAPbouiCOM.StaticText StaticText1;
-        private SAPbouiCOM.StaticText StaticText2;
-        private SAPbouiCOM.EditText EditText1;
+        private SAPbouiCOM.EditText EditText0;
         private SAPbouiCOM.Button Button0;
+        private SAPbouiCOM.Button Button1;
+        private SAPbouiCOM.StaticText StaticText2;
+        private SAPbouiCOM.ComboBox ComboBox1;
         private SAPbouiCOM.StaticText StaticText3;
-        private SAPbouiCOM.EditText EditText3;
-        private SAPbouiCOM.EditText EditText4;
-        private SAPbouiCOM.StaticText StaticText4;
+        private SAPbouiCOM.EditText EditText1;
+        private SAPbouiCOM.Button Button2;
+        private SAPbouiCOM.Button Button3;
     }
 }
